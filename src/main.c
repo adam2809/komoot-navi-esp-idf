@@ -33,13 +33,11 @@
 #include "freertos/FreeRTOS.h"
 
 #define GATTC_TAG "GATTC_DEMO"
-#define REMOTE_SERVICE_UUID        0x71C1E128D92F4FA8A2B20F171DB3436C
-#define REMOTE_NOTIFY_CHAR_UUID    0x503DD6059BCB4F6EB235270A57483026
 #define PROFILE_NUM      1
 #define PROFILE_A_APP_ID 0
 #define INVALID_HANDLE   0
 
-static const char remote_device_name[] = "ESP_GATTS_DEMO";
+static const char remote_device_name[] = "moto g(8) power";
 static bool connect    = false;
 static bool get_server = false;
 static esp_gattc_char_elem_t *char_elem_result   = NULL;
@@ -50,15 +48,14 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 static void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param);
 static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param);
 
-
 static esp_bt_uuid_t remote_filter_service_uuid = {
-    .len = ESP_UUID_LEN_16,
-    .uuid = {.uuid16 = REMOTE_SERVICE_UUID,},
+    .len = ESP_UUID_LEN_128,
+    .uuid.uuid128 = {0x6C,0x43,0xB3,0x1D,0x17,0x0F,0xB2,0xA2,0xA8,0x4F,0x2F,0xD9,0x28,0xE1,0xC1,0x71},
 };
 
 static esp_bt_uuid_t remote_filter_char_uuid = {
-    .len = ESP_UUID_LEN_16,
-    .uuid = {.uuid16 = REMOTE_NOTIFY_CHAR_UUID,},
+    .len = ESP_UUID_LEN_128,
+    .uuid.uuid128 = {0x26,0x30,0x48,0x57,0x0A,0x27,0x35,0xB2,0x6E,0x4F,0xCB,0x9B,0x05,0xD6,0x3D,0x50},
 };
 
 static esp_bt_uuid_t notify_descr_uuid = {
@@ -93,6 +90,16 @@ static struct gattc_profile_inst gl_profile_tab[PROFILE_NUM] = {
         .gattc_if = ESP_GATT_IF_NONE,       /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
     },
 };
+
+bool isUuid128Equal(uint8_t a[ESP_UUID_LEN_128],uint8_t b[ESP_UUID_LEN_128]){
+    for (int i = 0; i < ESP_UUID_LEN_128; i++){
+        if (a[i] != b[i]){
+            return false;
+        }
+    }
+    return true;
+    
+}
 
 static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
 {
@@ -142,12 +149,12 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
     case ESP_GATTC_SEARCH_RES_EVT: {
         ESP_LOGI(GATTC_TAG, "SEARCH RES: conn_id = %x is primary service %d", p_data->search_res.conn_id, p_data->search_res.is_primary);
         ESP_LOGI(GATTC_TAG, "start handle %d end handle %d current handle value %d", p_data->search_res.start_handle, p_data->search_res.end_handle, p_data->search_res.srvc_id.inst_id);
-        if (p_data->search_res.srvc_id.uuid.len == ESP_UUID_LEN_16 && p_data->search_res.srvc_id.uuid.uuid.uuid16 == REMOTE_SERVICE_UUID) {
+        if (p_data->search_res.srvc_id.uuid.len == ESP_UUID_LEN_128 && isUuid128Equal(p_data->search_res.srvc_id.uuid.uuid.uuid128,remote_filter_service_uuid.uuid.uuid128)) {
             ESP_LOGI(GATTC_TAG, "service found");
             get_server = true;
             gl_profile_tab[PROFILE_A_APP_ID].service_start_handle = p_data->search_res.start_handle;
             gl_profile_tab[PROFILE_A_APP_ID].service_end_handle = p_data->search_res.end_handle;
-            ESP_LOGI(GATTC_TAG, "UUID16: %x", p_data->search_res.srvc_id.uuid.uuid.uuid16);
+            ESP_LOGI(GATTC_TAG, "UUID128: %x%x (first 16 bits)", p_data->search_res.srvc_id.uuid.uuid.uuid128[15],p_data->search_res.srvc_id.uuid.uuid.uuid128[14]);
         }
         break;
     }
@@ -318,6 +325,8 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 {
     uint8_t *adv_name = NULL;
     uint8_t adv_name_len = 0;
+    uint8_t *adv_service = NULL;
+    uint8_t adv_service_len = 0;
     switch (event) {
     case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT: {
         //the unit of the duration is second
@@ -340,21 +349,12 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
         case ESP_GAP_SEARCH_INQ_RES_EVT:
             esp_log_buffer_hex(GATTC_TAG, scan_result->scan_rst.bda, 6);
             ESP_LOGI(GATTC_TAG, "searched Adv Data Len %d, Scan Response Len %d", scan_result->scan_rst.adv_data_len, scan_result->scan_rst.scan_rsp_len);
-            adv_name = esp_ble_resolve_adv_data(scan_result->scan_rst.ble_adv,
-                                                ESP_BLE_AD_TYPE_NAME_CMPL, &adv_name_len);
+            adv_name = esp_ble_resolve_adv_data(scan_result->scan_rst.ble_adv,ESP_BLE_AD_TYPE_NAME_CMPL, &adv_name_len);
+            adv_service = esp_ble_resolve_adv_data(scan_result->scan_rst.ble_adv,ESP_BLE_AD_TYPE_128SERVICE_DATA, &adv_service_len);
             ESP_LOGI(GATTC_TAG, "searched Device Name Len %d", adv_name_len);
             esp_log_buffer_char(GATTC_TAG, adv_name, adv_name_len);
-
-#if CONFIG_EXAMPLE_DUMP_ADV_DATA_AND_SCAN_RESP
-            if (scan_result->scan_rst.adv_data_len > 0) {
-                ESP_LOGI(GATTC_TAG, "adv data:");
-                esp_log_buffer_hex(GATTC_TAG, &scan_result->scan_rst.ble_adv[0], scan_result->scan_rst.adv_data_len);
-            }
-            if (scan_result->scan_rst.scan_rsp_len > 0) {
-                ESP_LOGI(GATTC_TAG, "scan resp:");
-                esp_log_buffer_hex(GATTC_TAG, &scan_result->scan_rst.ble_adv[scan_result->scan_rst.adv_data_len], scan_result->scan_rst.scan_rsp_len);
-            }
-#endif
+            ESP_LOGI(GATTC_TAG, "searched Device service data Len %d", adv_service_len);
+            esp_log_buffer_char(GATTC_TAG, adv_service, adv_service_len);
             ESP_LOGI(GATTC_TAG, "\n");
 
             if (adv_name != NULL) {
