@@ -20,6 +20,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 
@@ -101,6 +103,20 @@ bool isUuid128Equal(uint8_t a[ESP_UUID_LEN_128],uint8_t b[ESP_UUID_LEN_128]){
     
 }
 
+void  read_nav_char_task(void *pvParameter){
+    while(1){
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        if(get_server && connect){
+            ESP_LOGI(GATTC_TAG, "Reading characteristic");
+            esp_err_t read_ret = esp_ble_gattc_read_char(gl_profile_tab[PROFILE_A_APP_ID].gattc_if, gl_profile_tab[PROFILE_A_APP_ID].conn_id, gl_profile_tab[PROFILE_A_APP_ID].char_handle,ESP_GATT_AUTH_REQ_NONE);
+            if (read_ret){
+                ESP_LOGE(GATTC_TAG, "Error while reading characteristic");
+            }
+        }
+    }
+}
+
 static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
 {
     esp_ble_gattc_cb_param_t *p_data = (esp_ble_gattc_cb_param_t *)param;
@@ -146,11 +162,8 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         }
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_CFG_MTU_EVT, Status %d, MTU %d, conn_id %d", param->cfg_mtu.status, param->cfg_mtu.mtu, param->cfg_mtu.conn_id);
 
-        ESP_LOGI(GATTC_TAG, "Reading characteristic");
-        esp_err_t read_ret = esp_ble_gattc_read_char(gattc_if, gl_profile_tab[PROFILE_A_APP_ID].conn_id, gl_profile_tab[PROFILE_A_APP_ID].char_handle,ESP_GATT_AUTH_REQ_NONE);
-        if (read_ret){
-            ESP_LOGE(GATTC_TAG, "Error while reading characteristic");
-        }
+
+	    xTaskCreate(&read_nav_char_task, "read_nav_char_task", 4098, NULL, 5, NULL);
         break;
     case ESP_GATTC_SEARCH_RES_EVT: {
         ESP_LOGI(GATTC_TAG, "SEARCH RES: conn_id = %x is primary service %d", p_data->search_res.conn_id, p_data->search_res.is_primary);
@@ -257,7 +270,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
                                                                      descr_elem_result[0].handle,
                                                                      sizeof(notify_en),
                                                                      (uint8_t *)&notify_en,
-                                                                     ESP_GATT_WRITE_TYPE_NO_RSP,
+                                                                     ESP_GATT_WRITE_TYPE_RSP,
                                                                      ESP_GATT_AUTH_REQ_NONE);
                     }
 
