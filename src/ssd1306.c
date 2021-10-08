@@ -88,52 +88,6 @@ void ssd1306_software_scroll(SSD1306_t * dev, int start, int end)
 		}
 	}
 }
-
-
-void ssd1306_scroll_text(SSD1306_t * dev, char * text, int text_len, bool invert)
-{
-	ESP_LOGD(tag, "dev->_scEnable=%d", dev->_scEnable);
-	if (dev->_scEnable == false) return;
-
-	void (*func)(SSD1306_t * dev, int page, int seg, uint8_t * images, int width);
-	if (dev->_address == SPIAddress) {
-		func = spi_display_image;
-	} else {
-		func = i2c_display_image;
-	}
-
-	int srcIndex = dev->_scEnd - dev->_scDirection;
-	while(1) {
-		int dstIndex = srcIndex + dev->_scDirection;
-		ESP_LOGD(tag, "srcIndex=%d dstIndex=%d", srcIndex,dstIndex);
-		dev->_page[dstIndex]._valid = dev->_page[srcIndex]._valid;
-		dev->_page[dstIndex]._segLen = dev->_page[srcIndex]._segLen;
-		for(int seg = 0; seg < dev->_width; seg++) {
-			dev->_page[dstIndex]._segs[seg] = dev->_page[srcIndex]._segs[seg];
-		}
-		ESP_LOGD(tag, "_valid=%d", dev->_page[dstIndex]._valid);
-		if (dev->_page[dstIndex]._valid) (*func)(dev, dstIndex, 0, dev->_page[dstIndex]._segs, dev->_page[srcIndex]._segLen);
-		if (srcIndex == dev->_scStart) break;
-		srcIndex = srcIndex - dev->_scDirection;
-	}
-	
-	int _text_len = text_len;
-	if (_text_len > 16) _text_len = 16;
-	
-	uint8_t seg = 0;
-	uint8_t image[8];
-	for (uint8_t i = 0; i < _text_len; i++) {
-		memcpy(image, font8x8_basic_tr[(uint8_t)text[i]], 8);
-		if (invert) ssd1306_invert(image, 8);
-		if (dev->_flip) ssd1306_flip(image, 8);
-		(*func)(dev, srcIndex, seg, image, 8);
-		for(int j=0;j<8;j++) dev->_page[srcIndex]._segs[seg+j] = image[j];
-		seg = seg + 8;
-	}
-	dev->_page[srcIndex]._valid = true;
-	dev->_page[srcIndex]._segLen = seg;
-}
-
 void ssd1306_scroll_clear(SSD1306_t * dev)
 {
 	ESP_LOGD(tag, "dev->_scEnable=%d", dev->_scEnable);
