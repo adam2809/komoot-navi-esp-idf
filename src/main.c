@@ -32,14 +32,17 @@
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
+#include "ssd1306.h"
 
 #define GATTC_TAG "GATTC_DEMO"
+#define NAV_TAG "NAVIGATION_DISPLAY"
 #define PROFILE_NUM      1
 #define PROFILE_A_APP_ID 0
 #define INVALID_HANDLE   0
 #define SCAN_DURATION 30
 #define EXPECTED_ADV_DATA_LEN 21
+
+SSD1306_t disp;
 
 static bool connect    = false;
 static bool get_server = false;
@@ -401,7 +404,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
                 if (memcmp(adv_service,remote_filter_service_uuid.uuid.uuid128, ESP_UUID_LEN_128) == 0) {
                     if (connect == false) {
                         connect = true;
-                        ESP_LOGI(GATTC_TAG, "connect to the remote device.");
+                        ESP_LOGI(GATTC_TAG, "connect to the remote ice.");
                         esp_ble_gap_stop_scanning();
                         esp_ble_gattc_open(gl_profile_tab[PROFILE_A_APP_ID].gattc_if, scan_result->scan_rst.bda, scan_result->scan_rst.ble_addr_type, true);
                     }
@@ -476,8 +479,49 @@ static void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp
     } while (0);
 }
 
-void app_main(void)
-{
+
+void clear_display(){
+	ssd1306_clear_screen(&disp, false);
+	ssd1306_contrast(&disp, 0xff);
+}
+
+void config_display(){
+	#if CONFIG_I2C_INTERFACE
+		ESP_LOGI(NAV_TAG, "INTERFACE is i2c");
+		ESP_LOGI(NAV_TAG, "CONFIG_SDA_GPIO=%d",CONFIG_SDA_GPIO);
+		ESP_LOGI(NAV_TAG, "CONFIG_SCL_GPIO=%d",CONFIG_SCL_GPIO);
+		ESP_LOGI(NAV_TAG, "CONFIG_RESET_GPIO=%d",CONFIG_RESET_GPIO);
+		i2c_master_init(&disp, CONFIG_SDA_GPIO, CONFIG_SCL_GPIO, CONFIG_RESET_GPIO);
+	#endif // CONFIG_I2C_INTERFACE
+
+	#if CONFIG_SPI_INTERFACE
+		ESP_LOGI(tag, "INTERFACE is SPI");
+		ESP_LOGI(tag, "CONFIG_MOSI_GPIO=%d",CONFIG_MOSI_GPIO);
+		ESP_LOGI(tag, "CONFIG_SCLK_GPIO=%d",CONFIG_SCLK_GPIO);
+		ESP_LOGI(tag, "CONFIG_CS_GPIO=%d",CONFIG_CS_GPIO);
+		ESP_LOGI(tag, "CONFIG_DC_GPIO=%d",CONFIG_DC_GPIO);
+		ESP_LOGI(tag, "CONFIG_RESET_GPIO=%d",CONFIG_RESET_GPIO);
+		spi_master_init(&disp, CONFIG_MOSI_GPIO, CONFIG_SCLK_GPIO, CONFIG_CS_GPIO, CONFIG_DC_GPIO, CONFIG_RESET_GPIO);
+	#endif // CONFIG_SPI_INTERFACE
+
+	#if CONFIG_FLIP
+		disp._flip = true;
+		ESP_LOGW(tag, "Flip upside down");
+	#endif
+
+	#if CONFIG_SSD1306_128x64
+		ESP_LOGI(NAV_TAG, "Panel is 128x64");
+		ssd1306_init(&disp, 128, 64);
+	#endif // CONFIG_SSD1306_128x64
+	#if CONFIG_SSD1306_128x32
+		ESP_LOGI(tag, "Panel is 128x32");
+		ssd1306_init(&disp, 128, 32);
+	#endif // CONFIG_SSD1306_128x32
+
+	clear_display();
+}
+
+void app_main(void){
     // Initialize NVS.
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -536,4 +580,10 @@ void app_main(void)
         ESP_LOGE(GATTC_TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
     }
 
+    config_display();
+    uint8_t white[8][128];
+    for (int i = 0; i < 8; i++){
+        memset(white[i],0xFF,128);
+    }
+    display_fullscreen_image(&disp,white);
 }

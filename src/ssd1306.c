@@ -44,20 +44,9 @@ void ssd1306_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images,
 	}
 }
 
-void ssd1306_clear_screen(SSD1306_t * dev, bool invert)
-{
-    char space[16];
-    memset(space, 0x20, sizeof(space));
-    for (int page = 0; page < dev->_pages; page++) {
-        ssd1306_display_text(dev, page, space, sizeof(space), invert);
-    }
-}
-
-void ssd1306_clear_line(SSD1306_t * dev, int page, bool invert)
-{
-    char space[16];
-    memset(space, 0x20, sizeof(space));
-    ssd1306_display_text(dev, page, space, sizeof(space), invert);
+void ssd1306_clear_screen(SSD1306_t * dev, bool invert){
+    uint8_t blank[8][128] = {{0}};
+    display_fullscreen_image(dev,blank);
 }
 
 void ssd1306_contrast(SSD1306_t * dev, int contrast)
@@ -88,22 +77,6 @@ void ssd1306_software_scroll(SSD1306_t * dev, int start, int end)
 		}
 	}
 }
-void ssd1306_scroll_clear(SSD1306_t * dev)
-{
-	ESP_LOGD(tag, "dev->_scEnable=%d", dev->_scEnable);
-	if (dev->_scEnable == false) return;
-
-	int srcIndex = dev->_scEnd - dev->_scDirection;
-	while(1) {
-		int dstIndex = srcIndex + dev->_scDirection;
-		ESP_LOGD(tag, "srcIndex=%d dstIndex=%d", srcIndex,dstIndex);
-		ssd1306_clear_line(dev, dstIndex, false);
-		dev->_page[dstIndex]._valid = false;
-		if (dstIndex == dev->_scStart) break;
-		srcIndex = srcIndex - dev->_scDirection;
-	}
-}
-
 
 void ssd1306_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll)
 {
