@@ -38,6 +38,8 @@
 #define PROFILE_NUM      1
 #define PROFILE_A_APP_ID 0
 #define INVALID_HANDLE   0
+#define SCAN_DURATION 30
+
 
 static const char remote_device_name[] = "moto g(8) power";
 static bool connect    = false;
@@ -101,6 +103,18 @@ bool isUuid128Equal(uint8_t a[ESP_UUID_LEN_128],uint8_t b[ESP_UUID_LEN_128]){
     }
     return true;
     
+}
+
+struct nav_data_t{
+    uint8_t direction;
+    uint32_t distance;
+    char street[100];
+};
+struct nav_data_t curr_nav_data = {0,0,{0}};
+void resolve_nav_data(uint8_t* data,struct nav_data_t* target){
+    target->direction = data[4];
+    target->distance = ((uint32_t)data[5]) | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16) | ((uint32_t)data[8] << 24);
+    strcpy(target->street,(char*) &data[9]);
 }
 
 void  read_nav_char_task(void *pvParameter){
@@ -309,8 +323,11 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
             ESP_LOGE(GATTC_TAG, "read char failed, error status = 0x%x", p_data->read.status);
             break;
         }
-        ESP_LOGI(GATTC_TAG, "read descr success ");
+        ESP_LOGI(GATTC_TAG, "read descr success hex:");
         esp_log_buffer_hex(GATTC_TAG,p_data->read.value,p_data->read.value_len);
+        resolve_nav_data(p_data->read.value,&curr_nav_data);
+        ESP_LOGI(GATTC_TAG, "resolved:");
+        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",curr_nav_data.direction,curr_nav_data.distance,curr_nav_data.street);
         break;
     case ESP_GATTC_SRVC_CHG_EVT: {
         esp_bd_addr_t bda;
@@ -330,6 +347,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         connect = false;
         get_server = false;
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_DISCONNECT_EVT, reason = %d", p_data->disconnect.reason);
+        esp_ble_gap_start_scanning(SCAN_DURATION);
         break;
     default:
         break;
@@ -344,9 +362,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
     uint8_t adv_service_len = 0;
     switch (event) {
     case ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT: {
-        //the unit of the duration is second
-        uint32_t duration = 30;
-        esp_ble_gap_start_scanning(duration);
+        esp_ble_gap_start_scanning(SCAN_DURATION);
         break;
     }
     case ESP_GAP_BLE_SCAN_START_COMPLETE_EVT:
