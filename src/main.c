@@ -33,6 +33,7 @@
 #include "esp_gatt_common_api.h"
 #include "esp_log.h"
 #include "ssd1306.h"
+#include "symbols.h"
 
 #define GATTC_TAG "GATTC_DEMO"
 #define NAV_TAG "NAVIGATION_DISPLAY"
@@ -521,6 +522,41 @@ void config_display(){
 	clear_display();
 }
 
+unsigned int reverse_bits(uint8_t num){
+    unsigned int  NO_OF_BITS = 8;
+    unsigned int reverse_num = 0, i, temp;
+  
+    for (i = 0; i < NO_OF_BITS; i++)
+    {
+        temp = (num & (1 << i));
+        if(temp)
+            reverse_num |= (1 << ((NO_OF_BITS - 1) - i));
+    }
+   
+    return reverse_num;
+}
+
+void reverse_symbol_bits(uint8_t symbol[512],uint8_t target[512]){
+    for (int i = 0; i < 512; i++){
+        target[i] = reverse_bits(symbol[i]);   
+    }
+}
+
+void dir_disp_task(void *pvParameter){
+	clear_display();
+    int curr_symbol=0;
+
+    while(1){
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        uint8_t reversed[512];
+        reverse_symbol_bits(nav_symbols[curr_symbol],reversed);
+        display_partial_image(&disp,reversed,0,8,0,64);
+
+        curr_symbol++;
+    }
+}
+
 void app_main(void){
     // Initialize NVS.
     esp_err_t ret = nvs_flash_init();
@@ -581,9 +617,5 @@ void app_main(void){
     }
 
     config_display();
-    uint8_t white[8][128];
-    for (int i = 0; i < 8; i++){
-        memset(white[i],0xFF,128);
-    }
-    display_fullscreen_image(&disp,white);
+	xTaskCreate(&dir_disp_task, "display_dir_on_oled", 4098, NULL, 5, NULL);
 }

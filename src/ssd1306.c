@@ -18,14 +18,14 @@ void ssd1306_init(SSD1306_t * dev, int width, int height)
 	}
 }
 
-void display_partial_image(SSD1306_t* dev,uint8_t** image,int page,int page_count,int seg,int width){
+void display_partial_image(SSD1306_t* dev,uint8_t* image,int page,int page_count,int seg,int width){
 	if(page + page_count > MAX_PAGE_COUNT || seg + width > MAX_WIDTH){
 		ESP_LOGE(tag,"Page or width overflow when displaying partial image");
 		return;
 	}
 
 	for(uint8_t i=page;i<page + page_count;i++){
-		ssd1306_display_image(dev,i,seg,image[i],width);
+		ssd1306_display_image(dev,i,seg,(image+i*width),width);
 	}
 }
 
