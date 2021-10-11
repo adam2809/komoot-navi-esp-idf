@@ -46,7 +46,6 @@ extern const uint8_t ic_nav_roundabout_cw1_3[];
 extern const uint8_t ic_nav_roundabout_cw2_2[];
 extern const uint8_t ic_nav_roundabout_cw2_3[];
 extern const uint8_t not_defined[];
-extern const uint8_t ferry_train[];
 extern const uint8_t *nav_symbols[];
 
 #endif /* _symbols_H_ */

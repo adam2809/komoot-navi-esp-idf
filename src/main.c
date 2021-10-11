@@ -538,8 +538,15 @@ unsigned int reverse_bits(uint8_t num){
 
 void reverse_symbol_bits(uint8_t symbol[512],uint8_t target[512]){
     for (int i = 0; i < 512; i++){
-        target[i] = reverse_bits(symbol[i]);   
+        target[i] = reverse_bits(symbol[511-i]);   
     }
+}
+void reverse_symbol_pages(uint8_t symbol[512],uint8_t target[512]){
+	for(uint8_t i=0;i<8;i++){
+	    for(uint8_t j=0;j<64;i++){
+            *(target+i*64+j) = *(symbol+i*64+(63-j));
+        }
+	}
 }
 
 void dir_disp_task(void *pvParameter){
@@ -549,9 +556,7 @@ void dir_disp_task(void *pvParameter){
     while(1){
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-        uint8_t reversed[512];
-        reverse_symbol_bits(nav_symbols[curr_symbol],reversed);
-        display_partial_image(&disp,reversed,0,8,0,64);
+        display_partial_image(&disp,nav_symbols[curr_symbol],0,8,0,64);
 
         curr_symbol++;
     }
