@@ -43,6 +43,17 @@
 #define SCAN_DURATION 30
 #define EXPECTED_ADV_DATA_LEN 21
 
+
+#define MAX_PAGE_COUNT 8
+#define MAX_WIDTH 128
+#define NUMBER_PAGE_COUNT 3
+#define NUMBER_WIDTH 30
+#define NUMBER_IMAGE_WIDTH 21
+
+#define MANEUVER_PAGE_COUNT 8
+#define MANEUVER_WIDTH 64
+#define METER_DISPLAY_SEG 70
+
 SSD1306_t disp;
 
 static bool connect    = false;
@@ -522,43 +533,125 @@ void config_display(){
 	clear_display();
 }
 
-unsigned int reverse_bits(uint8_t num){
-    unsigned int  NO_OF_BITS = 8;
-    unsigned int reverse_num = 0, i, temp;
-  
-    for (i = 0; i < NO_OF_BITS; i++)
-    {
-        temp = (num & (1 << i));
-        if(temp)
-            reverse_num |= (1 << ((NO_OF_BITS - 1) - i));
-    }
-   
-    return reverse_num;
+void write_number_icon(uint8_t dest[MAX_PAGE_COUNT*NUMBER_WIDTH],uint8_t icon[NUMBER_PAGE_COUNT*NUMBER_WIDTH],int display_pixel,int number_pixel){
+	int number_page = number_pixel/8;
+	int display_page = display_pixel/8;
+
+	// Write pixels from start pixel to the end of current page
+	if(display_pixel%8!=0){
+		int pixels_to_full_page_display = 8-(display_pixel%8);
+		int pixels_to_full_page_number = 8-(number_pixel%8);
+
+
+		for(int seg=0;seg<NUMBER_WIDTH;seg++){
+
+			uint8_t old_right = (dest[display_page*NUMBER_WIDTH+seg] << pixels_to_full_page_display) >> pixels_to_full_page_display;
+			uint8_t new_left;
+
+			if(pixels_to_full_page_number < pixels_to_full_page_display){
+				uint8_t curr_right = icon[number_page*NUMBER_WIDTH+seg] >> number_pixel%8;
+				uint8_t next_left = icon[(number_page+1)*NUMBER_WIDTH+seg] << pixels_to_full_page_number;
+
+				new_left = (next_left | curr_right)<< display_pixel%8;
+			}else{
+				new_left = (icon[number_page*NUMBER_WIDTH+seg] >> number_pixel%8) << (number_pixel%8+(pixels_to_full_page_number-pixels_to_full_page_display));
+			}
+
+			dest[display_page*NUMBER_WIDTH*seg] = new_left | old_right;
+		}
+
+		number_pixel+=pixels_to_full_page_display;
+		display_pixel+=pixels_to_full_page_display;
+		number_page = number_pixel/8;
+		display_page = display_pixel/8;
+	}
+
+	// Write full pages
+	while (number_pixel < NUMBER_PAGE_COUNT*8-8+1){
+		for(int seg=0;seg<NUMBER_WIDTH;seg++){
+			int pixels_to_full_page_number = 8-(number_pixel%8);
+
+			uint8_t new_display_page;
+			if(pixels_to_full_page_number < 8){
+				uint8_t curr_right = icon[number_page*NUMBER_WIDTH+seg] >> number_pixel%8;
+				uint8_t next_left = icon[(number_page+1)*NUMBER_WIDTH+seg] << pixels_to_full_page_number;
+
+				new_display_page = next_left | curr_right;
+			}else{
+				new_display_page = icon[number_page*NUMBER_WIDTH+seg];
+			}
+
+			dest[display_page*NUMBER_WIDTH+seg] = new_display_page;
+		}
+
+		number_pixel+=8;
+		display_pixel+=8;
+		number_page = number_pixel/8;
+		display_page = display_pixel/8;
+	}
+
+	// Write what is left of last page of number on the beginning of next display page
+	if (number_pixel < NUMBER_PAGE_COUNT*8){
+		for(int seg=0;seg<NUMBER_WIDTH;seg++){
+			int pixels_to_end = NUMBER_PAGE_COUNT*8 - number_pixel;
+			int pixels_from_last_page = 8 - pixels_to_end;
+
+			uint8_t old_left = (dest[display_page*NUMBER_WIDTH+seg] >> pixels_to_end) << pixels_to_end;
+			uint8_t new_right = icon[number_page*NUMBER_WIDTH+seg] >> pixels_from_last_page;
+
+			dest[display_page*NUMBER_WIDTH+seg] = old_left | new_right;
+		}
+	}
 }
 
-void reverse_symbol_bits(uint8_t symbol[512],uint8_t target[512]){
-    for (int i = 0; i < 512; i++){
-        target[i] = reverse_bits(symbol[511-i]);   
-    }
+void display_numbers(uint8_t numbers[MAX_PAGE_COUNT*NUMBER_WIDTH]){
+	display_partial_image(&disp,numbers,0,MAX_PAGE_COUNT,METER_DISPLAY_SEG,NUMBER_WIDTH);
 }
-void reverse_symbol_pages(uint8_t symbol[512],uint8_t target[512]){
-	for(uint8_t i=0;i<8;i++){
-	    for(uint8_t j=0;j<64;i++){
-            *(target+i*64+j) = *(symbol+i*64+(63-j));
-        }
+
+void display_meters(uint32_t meters){
+	uint8_t meters_display[MAX_PAGE_COUNT*NUMBER_WIDTH] = {0};
+
+	if(meters == 0){	
+		write_number_icon(meters_display,numbers[0],0,3);
+		display_numbers(meters_display);
+		return;
 	}
+
+	if(meters >= 1000){	
+		write_number_icon(meters_display,greater_than,42,3);
+		write_number_icon(meters_display,numbers[1],21,3);
+		write_number_icon(meters_display,km,0,3);
+		display_numbers(meters_display);
+		return;
+	}
+
+	
+	int curr_pixel = 0;
+	while(meters != 0){
+		uint32_t digit = meters%10;
+
+		write_number_icon(meters_display,numbers[digit],curr_pixel,3);
+
+		meters/=10;
+		curr_pixel+=21;
+	}
+	display_numbers(meters_display);
+
+	char meters_str[10];
+	sprintf(meters_str,"%dm",meters);
+	ESP_LOGI(GATTC_TAG,"Displaying %d meters",meters);
 }
 
 void dir_disp_task(void *pvParameter){
 	clear_display();
-    int curr_symbol=0;
+    int curr_num=0;
 
     while(1){
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
 
-        display_partial_image(&disp,nav_symbols[curr_symbol],0,8,0,64);
+        display_meters(curr_num);
 
-        curr_symbol++;
+        curr_num+=10;
     }
 }
 

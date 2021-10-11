@@ -47,5 +47,18 @@ extern const uint8_t ic_nav_roundabout_cw2_2[];
 extern const uint8_t ic_nav_roundabout_cw2_3[];
 extern const uint8_t not_defined[];
 extern const uint8_t *nav_symbols[];
+extern const uint8_t *numbers[];
+extern const uint8_t zero[];
+extern const uint8_t one[];
+extern const uint8_t two[];
+extern const uint8_t three[];
+extern const uint8_t four[];
+extern const uint8_t five[];
+extern const uint8_t six[];
+extern const uint8_t seven[];
+extern const uint8_t eight[];
+extern const uint8_t nine[];
+extern const uint8_t greater_than[];
+extern const uint8_t km[];
 
 #endif /* _symbols_H_ */
