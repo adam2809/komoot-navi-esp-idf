@@ -119,6 +119,7 @@ bool isUuid128Equal(uint8_t a[ESP_UUID_LEN_128],uint8_t b[ESP_UUID_LEN_128]){
     
 }
 
+TaskHandle_t display_nav_task_handle = NULL;
 struct nav_data_t{
     uint8_t direction;
     uint32_t distance;
@@ -326,8 +327,14 @@ void display_meters(uint32_t meters){
 
 
 void  display_nav_task(void *pvParameter){
+    uint32_t ulNotifiedValue;
     while(1){
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        xTaskNotifyWait(
+            0x00,      /* Don't clear any notification bits on entry. */
+            ULONG_MAX, /* Reset the notification value to 0 on exit. */
+            &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+            portMAX_DELAY
+        );
 
         if(curr_nav_data.direction!=0){
             display_nav_symbol(nav_symbols[curr_nav_data.direction]);
@@ -379,8 +386,6 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
             ESP_LOGE(GATTC_TAG,"config mtu failed, error status = %x", param->cfg_mtu.status);
         }
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_CFG_MTU_EVT, Status %d, MTU %d, conn_id %d", param->cfg_mtu.status, param->cfg_mtu.mtu, param->cfg_mtu.conn_id);
-        
-	    xTaskCreate(&display_nav_task, "display_nav_task", 4098, NULL, 5, NULL);
         break;
     case ESP_GATTC_SEARCH_RES_EVT: {
         ESP_LOGI(GATTC_TAG, "SEARCH RES: conn_id = %x is primary service %d", p_data->search_res.conn_id, p_data->search_res.is_primary);
@@ -517,6 +522,16 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         resolve_nav_data(p_data->notify.value,&curr_nav_data);
         ESP_LOGI(GATTC_TAG, "resolved:");
         ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",curr_nav_data.direction,curr_nav_data.distance,curr_nav_data.street);
+        if (display_nav_task_handle != NULL){
+            xTaskNotify(
+                display_nav_task_handle,
+                0,
+                eNoAction
+            );
+        }else{
+            ESP_LOGE(GATTC_TAG,"NULL task handle");
+        }
+        
         break;
     case ESP_GATTC_WRITE_DESCR_EVT:
         if (p_data->write.status != ESP_GATT_OK){
@@ -836,6 +851,7 @@ void app_main(void){
     and the init key means which key you can distribute to the slave. */
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
-
+    
     config_display();
+    xTaskCreate(&display_nav_task, "display_nav_task", 4098, NULL, 5, &display_nav_task_handle);
 }
