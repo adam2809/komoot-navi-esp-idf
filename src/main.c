@@ -254,15 +254,6 @@ void  read_nav_char_task(void *pvParameter){
     while(1){
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-        if(get_server && connect){
-            ESP_LOGI(GATTC_TAG, "Reading characteristic");
-            esp_err_t read_ret = esp_ble_gattc_read_char(gl_profile_tab[PROFILE_A_APP_ID].gattc_if, gl_profile_tab[PROFILE_A_APP_ID].conn_id, gl_profile_tab[PROFILE_A_APP_ID].char_handle,ESP_GATT_AUTH_REQ_NONE);
-            if (read_ret){
-                ESP_LOGE(GATTC_TAG, "Error while reading characteristic");
-            }
-        }
-
-
         if(curr_nav_data.direction!=0){
             display_nav_symbol(nav_symbols[curr_nav_data.direction]);
         }
@@ -376,7 +367,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
                     /*  Every service have only one char in our 'ESP_GATTS_DEMO' demo, so we used first 'char_elem_result' */
                     if (count > 0 && (char_elem_result[0].properties & ESP_GATT_CHAR_PROP_BIT_NOTIFY)){
                         gl_profile_tab[PROFILE_A_APP_ID].char_handle = char_elem_result[0].char_handle;                        
-                        // esp_ble_gattc_register_for_notify (gattc_if, gl_profile_tab[PROFILE_A_APP_ID].remote_bda, char_elem_result[0].char_handle);
+                        esp_ble_gattc_register_for_notify (gattc_if, gl_profile_tab[PROFILE_A_APP_ID].remote_bda, char_elem_result[0].char_handle);
                     }
                 }
                 /* free char_elem_result */
@@ -425,7 +416,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
                                                                      sizeof(notify_en),
                                                                      (uint8_t *)&notify_en,
                                                                      ESP_GATT_WRITE_TYPE_RSP,
-                                                                     ESP_GATT_AUTH_REQ_NONE);
+                                                                     ESP_GATT_AUTH_REQ_NO_MITM);
                     }
 
                     if (ret_status != ESP_GATT_OK){
@@ -450,6 +441,11 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
             ESP_LOGI(GATTC_TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
         }
         esp_log_buffer_hex(GATTC_TAG, p_data->notify.value, p_data->notify.value_len);
+
+        resolve_nav_data(p_data->notify.value,&curr_nav_data);
+        ESP_LOGI(GATTC_TAG, "resolved:");
+        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",curr_nav_data.direction,curr_nav_data.distance,curr_nav_data.street);
+
         break;
     case ESP_GATTC_WRITE_DESCR_EVT:
         if (p_data->write.status != ESP_GATT_OK){
@@ -465,9 +461,6 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         }
         ESP_LOGI(GATTC_TAG, "read descr success hex:");
         esp_log_buffer_hex(GATTC_TAG,p_data->read.value,p_data->read.value_len);
-        resolve_nav_data(p_data->read.value,&curr_nav_data);
-        ESP_LOGI(GATTC_TAG, "resolved:");
-        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",curr_nav_data.direction,curr_nav_data.distance,curr_nav_data.street);
         break;
     case ESP_GATTC_SRVC_CHG_EVT: {
         esp_bd_addr_t bda;
