@@ -83,7 +83,7 @@ static esp_bt_uuid_t notify_descr_uuid = {
 
 static esp_ble_scan_params_t ble_scan_params = {
     .scan_type              = BLE_SCAN_TYPE_ACTIVE,
-    .own_addr_type          = BLE_ADDR_TYPE_PUBLIC,
+    .own_addr_type          = BLE_ADDR_TYPE_RANDOM,
     .scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_ALL,
     .scan_interval          = 0x50,
     .scan_window            = 0x30,
@@ -133,6 +133,81 @@ void resolve_nav_data(uint8_t* data,struct nav_data_t* target){
 
 
 
+static char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req)
+{
+   char *auth_str = NULL;
+   switch(auth_req) {
+    case ESP_LE_AUTH_NO_BOND:
+        auth_str = "ESP_LE_AUTH_NO_BOND";
+        break;
+    case ESP_LE_AUTH_BOND:
+        auth_str = "ESP_LE_AUTH_BOND";
+        break;
+    case ESP_LE_AUTH_REQ_MITM:
+        auth_str = "ESP_LE_AUTH_REQ_MITM";
+        break;
+    case ESP_LE_AUTH_REQ_BOND_MITM:
+        auth_str = "ESP_LE_AUTH_REQ_BOND_MITM";
+        break;
+    case ESP_LE_AUTH_REQ_SC_ONLY:
+        auth_str = "ESP_LE_AUTH_REQ_SC_ONLY";
+        break;
+    case ESP_LE_AUTH_REQ_SC_BOND:
+        auth_str = "ESP_LE_AUTH_REQ_SC_BOND";
+        break;
+    case ESP_LE_AUTH_REQ_SC_MITM:
+        auth_str = "ESP_LE_AUTH_REQ_SC_MITM";
+        break;
+    case ESP_LE_AUTH_REQ_SC_MITM_BOND:
+        auth_str = "ESP_LE_AUTH_REQ_SC_MITM_BOND";
+        break;
+    default:
+        auth_str = "INVALID BLE AUTH REQ";
+        break;
+   }
+
+   return auth_str;
+}
+
+
+static const char *esp_key_type_to_str(esp_ble_key_type_t key_type)
+{
+   const char *key_str = NULL;
+   switch(key_type) {
+    case ESP_LE_KEY_NONE:
+        key_str = "ESP_LE_KEY_NONE";
+        break;
+    case ESP_LE_KEY_PENC:
+        key_str = "ESP_LE_KEY_PENC";
+        break;
+    case ESP_LE_KEY_PID:
+        key_str = "ESP_LE_KEY_PID";
+        break;
+    case ESP_LE_KEY_PCSRK:
+        key_str = "ESP_LE_KEY_PCSRK";
+        break;
+    case ESP_LE_KEY_PLK:
+        key_str = "ESP_LE_KEY_PLK";
+        break;
+    case ESP_LE_KEY_LLK:
+        key_str = "ESP_LE_KEY_LLK";
+        break;
+    case ESP_LE_KEY_LENC:
+        key_str = "ESP_LE_KEY_LENC";
+        break;
+    case ESP_LE_KEY_LID:
+        key_str = "ESP_LE_KEY_LID";
+        break;
+    case ESP_LE_KEY_LCSRK:
+        key_str = "ESP_LE_KEY_LCSRK";
+        break;
+    default:
+        key_str = "INVALID BLE KEY TYPE";
+        break;
+
+    }
+     return key_str;
+}
 
 void write_number_icon(uint8_t dest[MAX_PAGE_COUNT*NUMBER_WIDTH],uint8_t icon[NUMBER_PAGE_COUNT*NUMBER_WIDTH],int display_pixel,int number_pixel){
 	int number_page = number_pixel/8;
@@ -250,15 +325,15 @@ void display_meters(uint32_t meters){
 }
 
 
-void  read_nav_char_task(void *pvParameter){
+void  display_nav_char_task(void *pvParameter){
     while(1){
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-        if(curr_nav_data.direction!=0){
-            display_nav_symbol(nav_symbols[curr_nav_data.direction]);
-        }
+        // if(curr_nav_data.direction!=0){
+        //     display_nav_symbol(nav_symbols[curr_nav_data.direction]);
+        // }
         
-        display_meters(curr_nav_data.distance);
+        // display_meters(curr_nav_data.distance);
     }
 }
 
@@ -269,10 +344,8 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
     switch (event) {
     case ESP_GATTC_REG_EVT:
         ESP_LOGI(GATTC_TAG, "REG_EVT");
-        esp_err_t scan_ret = esp_ble_gap_set_scan_params(&ble_scan_params);
-        if (scan_ret){
-            ESP_LOGE(GATTC_TAG, "set scan params error, error code = %x", scan_ret);
-        }
+
+        esp_ble_gap_config_local_privacy(true);
         break;
     case ESP_GATTC_CONNECT_EVT:{
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_CONNECT_EVT conn_id %d, if %d", p_data->connect.conn_id, gattc_if);
@@ -308,7 +381,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_CFG_MTU_EVT, Status %d, MTU %d, conn_id %d", param->cfg_mtu.status, param->cfg_mtu.mtu, param->cfg_mtu.conn_id);
 
 
-	    xTaskCreate(&read_nav_char_task, "read_nav_char_task", 4098, NULL, 5, NULL);
+	    xTaskCreate(&display_nav_char_task, "read_nav_char_task", 4098, NULL, 5, NULL);
         break;
     case ESP_GATTC_SEARCH_RES_EVT: {
         ESP_LOGI(GATTC_TAG, "SEARCH RES: conn_id = %x is primary service %d", p_data->search_res.conn_id, p_data->search_res.is_primary);
@@ -514,7 +587,43 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
         }
         ESP_LOGI(GATTC_TAG, "scan start success");
 
+        break;    
+    case ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT:
+        ESP_LOGI(GATTC_TAG, "ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT");
+
+        if (param->local_privacy_cmpl.status != ESP_BT_STATUS_SUCCESS){
+            ESP_LOGE(GATTC_TAG, "config local privacy failed, error code =%x", param->local_privacy_cmpl.status);
+            break;
+        }
+        esp_err_t scan_ret = esp_ble_gap_set_scan_params(&ble_scan_params);
+        if (scan_ret){
+            ESP_LOGE(GATTC_TAG, "set scan params error, error code = %x", scan_ret);
+        }
         break;
+    
+    case ESP_GAP_BLE_PASSKEY_NOTIF_EVT:  ///the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
+        ///show the passkey number to the user to input it in the peer device.
+        ESP_LOGI(GATTC_TAG, "The passkey Notify number:%06d", param->ble_security.key_notif.passkey);
+        break;
+    case ESP_GAP_BLE_KEY_EVT:
+        //shows the ble key info share with peer device to the user.
+        ESP_LOGI(GATTC_TAG, "key type = %s", esp_key_type_to_str(param->ble_security.ble_key.key_type));
+        break;
+    case ESP_GAP_BLE_AUTH_CMPL_EVT: {
+        esp_bd_addr_t bd_addr;
+        memcpy(bd_addr, param->ble_security.auth_cmpl.bd_addr, sizeof(esp_bd_addr_t));
+        ESP_LOGI(GATTC_TAG, "remote BD_ADDR: %08x%04x",\
+                (bd_addr[0] << 24) + (bd_addr[1] << 16) + (bd_addr[2] << 8) + bd_addr[3],
+                (bd_addr[4] << 8) + bd_addr[5]);
+        ESP_LOGI(GATTC_TAG, "address type = %d", param->ble_security.auth_cmpl.addr_type);
+        ESP_LOGI(GATTC_TAG, "pair status = %s",param->ble_security.auth_cmpl.success ? "success" : "fail");
+        if (!param->ble_security.auth_cmpl.success) {
+            ESP_LOGI(GATTC_TAG, "fail reason = 0x%x",param->ble_security.auth_cmpl.fail_reason);
+        } else {
+            ESP_LOGI(GATTC_TAG, "auth mode = %s",esp_auth_req_to_str(param->ble_security.auth_cmpl.auth_mode));
+        }
+        break;
+    }
     case ESP_GAP_BLE_SCAN_RESULT_EVT: {
         esp_ble_gap_cb_param_t *scan_result = (esp_ble_gap_cb_param_t *)param;
         switch (scan_result->scan_rst.search_evt) {
@@ -710,6 +819,25 @@ void app_main(void){
     if (local_mtu_ret){
         ESP_LOGE(GATTC_TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
     }
+
+
+    /* set the security iocap & auth_req & key size & init key response key parameters to the stack*/
+    esp_ble_auth_req_t auth_req = ESP_LE_AUTH_BOND;     //bonding with peer device after authentication
+    esp_ble_io_cap_t iocap = ESP_IO_CAP_OUT;           //set the IO capability to No output No input
+    uint8_t key_size = 16;      //the key size should be 7~16 bytes
+    uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+    uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+    uint8_t oob_support = ESP_BLE_OOB_DISABLE;
+    esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_IOCAP_MODE, &iocap, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_MAX_KEY_SIZE, &key_size, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_OOB_SUPPORT, &oob_support, sizeof(uint8_t));
+    /* If your BLE device act as a Slave, the init_key means you hope which types of key of the master should distribute to you,
+    and the response key means which key you can distribute to the Master;
+    If your BLE device act as a master, the response key means you hope which types of key of the slave should distribute to you,
+    and the init key means which key you can distribute to the slave. */
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
 
     config_display();
 }
