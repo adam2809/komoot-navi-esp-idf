@@ -325,15 +325,15 @@ void display_meters(uint32_t meters){
 }
 
 
-void  display_nav_char_task(void *pvParameter){
+void  display_nav_task(void *pvParameter){
     while(1){
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-        // if(curr_nav_data.direction!=0){
-        //     display_nav_symbol(nav_symbols[curr_nav_data.direction]);
-        // }
+        if(curr_nav_data.direction!=0){
+            display_nav_symbol(nav_symbols[curr_nav_data.direction]);
+        }
         
-        // display_meters(curr_nav_data.distance);
+        display_meters(curr_nav_data.distance);
     }
 }
 
@@ -379,9 +379,8 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
             ESP_LOGE(GATTC_TAG,"config mtu failed, error status = %x", param->cfg_mtu.status);
         }
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_CFG_MTU_EVT, Status %d, MTU %d, conn_id %d", param->cfg_mtu.status, param->cfg_mtu.mtu, param->cfg_mtu.conn_id);
-
-
-	    xTaskCreate(&display_nav_char_task, "read_nav_char_task", 4098, NULL, 5, NULL);
+        
+	    xTaskCreate(&display_nav_task, "display_nav_task", 4098, NULL, 5, NULL);
         break;
     case ESP_GATTC_SEARCH_RES_EVT: {
         ESP_LOGI(GATTC_TAG, "SEARCH RES: conn_id = %x is primary service %d", p_data->search_res.conn_id, p_data->search_res.is_primary);
@@ -518,7 +517,6 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         resolve_nav_data(p_data->notify.value,&curr_nav_data);
         ESP_LOGI(GATTC_TAG, "resolved:");
         ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",curr_nav_data.direction,curr_nav_data.distance,curr_nav_data.street);
-
         break;
     case ESP_GATTC_WRITE_DESCR_EVT:
         if (p_data->write.status != ESP_GATT_OK){
