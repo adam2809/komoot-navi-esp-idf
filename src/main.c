@@ -53,6 +53,8 @@
 #define MANEUVER_PAGE_COUNT 8
 #define MANEUVER_WIDTH 64
 #define METER_DISPLAY_SEG 70
+#define PASSKEY_LINE_1_DISPLAY_SEG 35
+#define PASSKEY_LINE_2_DISPLAY_SEG 70
 
 SSD1306_t disp;
 
@@ -131,8 +133,13 @@ void resolve_nav_data(uint8_t* data,struct nav_data_t* target){
     target->distance = ((uint32_t)data[5]) | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16) | ((uint32_t)data[8] << 24);
     strcpy(target->street,(char*) &data[9]);
 }
+uint32_t curr_passkey=123456;
 
 
+enum display_task_notify_value_t{
+    NOTIFY_VALUE_NAVIGATION,
+    NOTIFY_VALUE_PASSKEY
+};
 
 static char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req)
 {
@@ -282,14 +289,25 @@ void write_number_icon(uint8_t dest[MAX_PAGE_COUNT*NUMBER_WIDTH],uint8_t icon[NU
 }
 
 
-void display_numbers(uint8_t numbers[MAX_PAGE_COUNT*NUMBER_WIDTH]){
-	display_partial_image(&disp,numbers,0,MAX_PAGE_COUNT,METER_DISPLAY_SEG,NUMBER_WIDTH);
+void display_numbers(uint8_t numbers[MAX_PAGE_COUNT*NUMBER_WIDTH],int seg){
+	display_partial_image(&disp,numbers,0,MAX_PAGE_COUNT,seg,NUMBER_WIDTH);
 }
 void display_nav_symbol(uint8_t symbol[MAX_PAGE_COUNT*MANEUVER_WIDTH]){
     display_partial_image(&disp,symbol,0,8,0,64);
 }
 
+void write_digits_to_buffer(uint32_t number,uint8_t buffer[MAX_PAGE_COUNT*NUMBER_WIDTH]){
+	int curr_pixel = 0;
+	while(number != 0){
+		uint32_t digit = number%10;
+        ESP_LOGD(GATTC_TAG,"Writing num");
 
+		write_number_icon(buffer,numbers[digit],curr_pixel,3);
+
+		number/=10;
+		curr_pixel+=21;
+	}
+}
 
 void display_meters(uint32_t meters){
 	char meters_str[10];
@@ -299,30 +317,17 @@ void display_meters(uint32_t meters){
 
 	if(meters == 0){	
 		write_number_icon(meters_display,numbers[0],0,3);
-		display_numbers(meters_display);
-		return;
-	}
-
-	if(meters >= 1000){	
+		display_numbers(meters_display,METER_DISPLAY_SEG);
+	}else if(meters >= 1000){	
 		write_number_icon(meters_display,greater_than,42,3);
 		write_number_icon(meters_display,numbers[1],21,3);
 		write_number_icon(meters_display,km,0,3);
-		display_numbers(meters_display);
-		return;
-	}
+		display_numbers(meters_display,METER_DISPLAY_SEG);
+	}else{
+        write_digits_to_buffer(meters,meters_display);
+    }
 
-	
-	int curr_pixel = 0;
-	while(meters != 0){
-		uint32_t digit = meters%10;
-        ESP_LOGD(GATTC_TAG,"Writing num");
-
-		write_number_icon(meters_display,numbers[digit],curr_pixel,3);
-
-		meters/=10;
-		curr_pixel+=21;
-	}
-	display_numbers(meters_display);
+	display_numbers(meters_display,METER_DISPLAY_SEG);
 }
 
 
@@ -335,12 +340,24 @@ void  display_nav_task(void *pvParameter){
             &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
             portMAX_DELAY
         );
+        ESP_LOGI(GATTC_TAG,"Display task got notification with value %d",ulNotifiedValue);
 
-        if(curr_nav_data.direction!=0){
-            display_nav_symbol(nav_symbols[curr_nav_data.direction]);
+        if(ulNotifiedValue == NOTIFY_VALUE_NAVIGATION){
+            if(curr_nav_data.direction!=0){
+                display_nav_symbol(nav_symbols[curr_nav_data.direction]);
+            }
+            
+            display_meters(curr_nav_data.distance);
+        }else if(ulNotifiedValue == NOTIFY_VALUE_PASSKEY){
+	        uint8_t passkey_display[MAX_PAGE_COUNT*NUMBER_WIDTH] = {0};
+            write_digits_to_buffer(456,passkey_display);
+
+            display_numbers(passkey_display,PASSKEY_LINE_1_DISPLAY_SEG);
+
+            memset(passkey_display,0,MAX_PAGE_COUNT*NUMBER_WIDTH);
+            write_digits_to_buffer(123,passkey_display);
+            display_numbers(passkey_display,PASSKEY_LINE_2_DISPLAY_SEG);
         }
-        
-        display_meters(curr_nav_data.distance);
     }
 }
 
@@ -525,7 +542,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         if (display_nav_task_handle != NULL){
             xTaskNotify(
                 display_nav_task_handle,
-                0,
+                NOTIFY_VALUE_NAVIGATION,
                 eNoAction
             );
         }else{
@@ -616,7 +633,19 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
     
     case ESP_GAP_BLE_PASSKEY_NOTIF_EVT:  ///the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
         ///show the passkey number to the user to input it in the peer device.
-        ESP_LOGI(GATTC_TAG, "The passkey Notify number:%06d", param->ble_security.key_notif.passkey);
+        ESP_LOGI(GATTC_TAG, "ESP_GAP_BLE_PASSKEY_NOTIF_EVT");
+        curr_passkey = param->ble_security.key_notif.passkey;
+        ESP_LOGI(GATTC_TAG, "The passkey Notify number:%06d", curr_passkey);
+
+        if (display_nav_task_handle != NULL){
+            xTaskNotify(
+                display_nav_task_handle,
+                NOTIFY_VALUE_PASSKEY,
+                eNoAction
+            );
+        }else{
+            ESP_LOGE(GATTC_TAG,"NULL task handle");
+        }
         break;
     case ESP_GAP_BLE_KEY_EVT:
         //shows the ble key info share with peer device to the user.
@@ -773,6 +802,23 @@ void config_display(){
 
 	clear_display();
 }
+
+void  test_task(void *pvParameter){
+    bool flag = true;
+    while(1){
+        vTaskDelay(1000/portTICK_PERIOD_MS);
+        
+        xTaskNotify(
+            display_nav_task_handle,
+            flag ? NOTIFY_VALUE_NAVIGATION : NOTIFY_VALUE_PASSKEY,
+            eSetValueWithOverwrite
+        );
+        ESP_LOGI(GATTC_TAG,"Sending notification with value %d",flag ? NOTIFY_VALUE_NAVIGATION : NOTIFY_VALUE_PASSKEY);
+
+        flag = !flag;
+    }
+}
+ 
 
 void app_main(void){
     // Initialize NVS.
