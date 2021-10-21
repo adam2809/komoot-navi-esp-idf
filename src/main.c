@@ -85,7 +85,7 @@ static esp_bt_uuid_t notify_descr_uuid = {
 
 static esp_ble_scan_params_t ble_scan_params = {
     .scan_type              = BLE_SCAN_TYPE_ACTIVE,
-    .own_addr_type          = BLE_ADDR_TYPE_RANDOM,
+    .own_addr_type          = BLE_ADDR_TYPE_PUBLIC,
     .scan_filter_policy     = BLE_SCAN_FILTER_ALLOW_ALL,
     .scan_interval          = 0x50,
     .scan_window            = 0x30,
@@ -898,6 +898,6 @@ void app_main(void){
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
     
-    config_display();
-    xTaskCreate(&display_nav_task, "display_nav_task", 4098, NULL, 5, &display_nav_task_handle);
+    // config_display();
+    // xTaskCreate(&display_nav_task, "display_nav_task", 4098, NULL, 5, &display_nav_task_handle);
 }
