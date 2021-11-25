@@ -350,12 +350,12 @@ void  display_nav_task(void *pvParameter){
             display_meters(curr_nav_data.distance);
         }else if(ulNotifiedValue == NOTIFY_VALUE_PASSKEY){
 	        uint8_t passkey_display[MAX_PAGE_COUNT*NUMBER_WIDTH] = {0};
-            write_digits_to_buffer(456,passkey_display);
+            write_digits_to_buffer(curr_passkey/1000,passkey_display);
 
             display_numbers(passkey_display,PASSKEY_LINE_1_DISPLAY_SEG);
 
             memset(passkey_display,0,MAX_PAGE_COUNT*NUMBER_WIDTH);
-            write_digits_to_buffer(123,passkey_display);
+            write_digits_to_buffer(curr_passkey%1000,passkey_display);
             display_numbers(passkey_display,PASSKEY_LINE_2_DISPLAY_SEG);
         }
     }
@@ -898,6 +898,6 @@ void app_main(void){
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
     
-    // config_display();
-    // xTaskCreate(&display_nav_task, "display_nav_task", 4098, NULL, 5, &display_nav_task_handle);
+    config_display();
+    xTaskCreate(&display_nav_task, "display_nav_task", 4098, NULL, 5, &display_nav_task_handle);
 }
