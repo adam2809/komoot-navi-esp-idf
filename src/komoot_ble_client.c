@@ -171,7 +171,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
             xTaskNotify(
                 *display_nav_task_handle_pointer,
                 NOTIFY_VALUE_PASSKEY,
-                eNoAction
+                eSetValueWithOverwrite
             );
         }else{
             ESP_LOGE(GATTC_TAG,"NULL task handle");
@@ -473,7 +473,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
             xTaskNotify(
                 *display_nav_task_handle_pointer,
                 NOTIFY_VALUE_NAVIGATION,
-                eNoAction
+                eSetValueWithOverwrite
             );
         }else{
             ESP_LOGE(GATTC_TAG,"NULL task handle");
