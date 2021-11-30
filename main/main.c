@@ -82,7 +82,7 @@ void app_main(){
     }
     ESP_ERROR_CHECK( ret );
 
-    init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
+    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
     xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, NULL, 1);
 }
@@ -119,28 +119,28 @@ void  display_task_new(void *pvParameter){
     init_lvgl_display(buf);
     init_lvgl_objs();
 
+    int counter = 0;
     while (1) {
-        // int counter = 0;
+        /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
+        vTaskDelay(pdMS_TO_TICKS(10));
 
-        // /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
-        // vTaskDelay(pdMS_TO_TICKS(10));
-
-        // counter%=1000;
-        // ESP_LOGI(NAV_TAG,"Counter: %d",counter);
-        // lv_img_set_src(digit_row_top[2], digits[counter%10]);
-        // if(counter > 9){
-        //   lv_img_set_src(digit_row_top[1], digits[(counter%100)/10]);
-        // }else{
-        //   lv_img_set_src(digit_row_top[1], digits[0]);
-        // }
-        // if(counter > 99){
-        //   lv_img_set_src(digit_row_top[0], digits[counter/100]);
-        // }else{
-        //   lv_img_set_src(digit_row_top[0], digits[0]);
-        // }
-        // counter++;
+        counter%=1000;
+        ESP_LOGI(NAV_TAG,"Counter: %d",counter);
+        lv_img_set_src(digit_row_top[2], digits[counter%10]);
+        if(counter > 9){
+          lv_img_set_src(digit_row_top[1], digits[(counter%100)/10]);
+        }else{
+          lv_img_set_src(digit_row_top[1], digits[0]);
+        }
+        if(counter > 99){
+          lv_img_set_src(digit_row_top[0], digits[counter/100]);
+        }else{
+          lv_img_set_src(digit_row_top[0], digits[0]);
+        }
+        counter++;
         /* Try to take the semaphore, call lvgl related function on success */
         if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
+            ESP_LOGD(NAV_TAG,"Calling task handler");
             lv_task_handler();
             xSemaphoreGive(xGuiSemaphore);
        }
@@ -192,7 +192,7 @@ static void init_lvgl_objs(){
 
     for(int i = 0;i < DIGITS_IN_ROW_COUNT;i++){
         if(digit_row_bottom[i] != NULL || digit_row_top[i] != NULL){
-            ESP_LOGI(NAV_TAG,"DUPADUASODJIASDJIA");
+            ESP_LOGE(NAV_TAG,"DUPADUASODJIASDJIA");
         }
         digit_row_top[i] = lv_img_create(scr,NULL);
         digit_row_bottom[i] = lv_img_create(scr,NULL);
@@ -207,9 +207,9 @@ static void init_lvgl_objs(){
     lv_obj_align(digit_row_top[1], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_TOP_X_OFFSET, DIGIT_2_Y_OFFSET);
     lv_obj_align(digit_row_top[2], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_TOP_X_OFFSET, DIGIT_3_Y_OFFSET);
 
-    lv_obj_align(digit_row_bottom[0], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET);
-    lv_obj_align(digit_row_bottom[1], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET, DIGIT_2_Y_OFFSET);
-    lv_obj_align(digit_row_bottom[2], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET, DIGIT_3_Y_OFFSET);
+    lv_obj_align(digit_row_bottom[0], NULL, LV_ALIGN_IN_BOTTOM_RIGHT,-DIGITS_ROW_TOP_X_OFFSET,DIGIT_1_Y_OFFSET);
+    lv_obj_align(digit_row_bottom[1], NULL, LV_ALIGN_IN_BOTTOM_RIGHT,-DIGITS_ROW_TOP_X_OFFSET, DIGIT_2_Y_OFFSET);
+    lv_obj_align(digit_row_bottom[2], NULL, LV_ALIGN_IN_BOTTOM_RIGHT,-DIGITS_ROW_TOP_X_OFFSET, DIGIT_3_Y_OFFSET);
 }
 
 static void lv_tick_task(void *arg) {
