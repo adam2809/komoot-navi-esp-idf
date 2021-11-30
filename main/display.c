@@ -37,8 +37,8 @@ void init_lvgl_display(lv_color_t* buf) {
 }
 
 void init_lvgl_objs(){
-    lv_obj_t * passkey_scr  = lv_obj_create(NULL, NULL);
-    lv_obj_t * nav_scr  = lv_obj_create(NULL, NULL);
+    passkey_scr  = lv_obj_create(NULL, NULL);
+    nav_scr  = lv_obj_create(NULL, NULL);
 
     for(int i = 0;i < DIGITS_IN_ROW_COUNT;i++){
         passkey_digits_row_top[i] = lv_img_create(passkey_scr,NULL);
@@ -53,5 +53,40 @@ void init_lvgl_objs(){
         lv_obj_align(passkey_digits_row_bottom[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
         lv_obj_align(meters_digits[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
     }
-    lv_scr_load(passk_scr);
+    // lv_scr_load(nav_scr);
+}
+
+void display_number_row(uint32_t row_content,lv_obj_t* row[]){
+    lv_img_set_src(row[2], digits[row_content%10]);
+    if(row_content > 9){
+        lv_img_set_src(row[1], digits[(row_content%100)/10]);
+    }else{
+        lv_img_set_src(row[1], digits[0]);
+    }
+    if(row_content > 99){
+        lv_img_set_src(row[0], digits[row_content/100]);
+    }else{
+        lv_img_set_src(row[0], digits[0]);
+    }
+}
+
+void display_passkey(uint32_t passkey){
+    ESP_LOGI(DISPLAY_TAG,"Displaing passkey: %d",passkey);
+    lv_scr_load(passkey_scr);
+
+    display_number_row(passkey/1000,passkey_digits_row_top);
+    display_number_row(passkey%1000,passkey_digits_row_bottom);
+
+
+}
+
+void display_nav_symbol(uint8_t symbol){
+
+}
+
+void display_meters(uint32_t meters){
+    ESP_LOGI(DISPLAY_TAG,"Displaing meters: %d",meters);
+    lv_scr_load(nav_scr);
+
+    display_number_row(meters < 1000 ? meters : 999,meters_digits);
 }

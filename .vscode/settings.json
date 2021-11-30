@@ -15,6 +15,7 @@
         "esp_gatt_common_api.h": "c",
         "digit_imgs.h": "c",
         "komoot_ble_client.h": "c",
-        "display.h": "c"
+        "display.h": "c",
+        "esp_log.h": "c"
     }
 }
