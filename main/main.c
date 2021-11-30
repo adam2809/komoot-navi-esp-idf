@@ -37,15 +37,12 @@
 #include "esp_log.h"
 
 #include "komoot_ble_client.h"
-
-#include "digit_imgs.h"
-
+#include "display.h"
 
 
 #define NAV_TAG "NAVIGATION_DISPLAY"
 
 #define LV_TICK_PERIOD_MS 1
-#define DIGITS_IN_ROW_COUNT 3
 
 uint32_t curr_passkey=123456;
 struct nav_data_t curr_nav_data = {0,0,{0}};
@@ -53,20 +50,11 @@ struct nav_data_t curr_nav_data = {0,0,{0}};
 TaskHandle_t display_nav_task_handle = NULL;
 
 
-lv_obj_t* nav_scr;
-lv_obj_t* passkey_scr;
-
-lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
-lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
-
-lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
 
 
 #define LV_TICK_PERIOD_MS 1
 
 void display_task(void *pvParameter);
-static void init_lvgl_display();
-static void init_lvgl_objs();
 static void lv_tick_task(void *arg);
 void  display_task_new(void *pvParameter);
 
@@ -121,8 +109,19 @@ SemaphoreHandle_t xGuiSemaphore;
 
 void  display_task_new(void *pvParameter){
     (void) pvParameter;
+    xGuiSemaphore = xSemaphoreCreateMutex();
+    
     lv_color_t* buf=NULL;
     init_lvgl_display(buf);
+    
+    const esp_timer_create_args_t periodic_timer_args = {
+        .callback = &lv_tick_task,
+        .name = "periodic_gui"
+    };
+    esp_timer_handle_t periodic_timer;
+    ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
+    
     init_lvgl_objs();
 
     uint32_t ulNotifiedValue;
@@ -156,62 +155,7 @@ void  display_task_new(void *pvParameter){
     vTaskDelete(NULL);
 }
 
-static void init_lvgl_display(lv_color_t* buf) {
-    xGuiSemaphore = xSemaphoreCreateMutex();
 
-    lv_init();
-
-    /* Initialize SPI or I2C bus used by the drivers */
-    lvgl_driver_init();
-
-    buf = heap_caps_malloc(DISP_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
-    assert(buf != NULL);
-
-    static lv_disp_buf_t disp_buf;
-
-    uint32_t size_in_px = DISP_BUF_SIZE*8;
-
-    /* Initialize the working buffer depending on the selected display.
-     * NOTE: buf2 == NULL when using monochrome displays. */
-    lv_disp_buf_init(&disp_buf, buf, NULL, size_in_px);
-
-    lv_disp_drv_t disp_drv;
-    lv_disp_drv_init(&disp_drv);
-    disp_drv.flush_cb = disp_driver_flush;
-    disp_drv.rounder_cb = disp_driver_rounder;
-    disp_drv.set_px_cb = disp_driver_set_px;
-    disp_drv.buffer = &disp_buf;
-    lv_disp_drv_register(&disp_drv);
-
-    /* Create and start a periodic timer interrupt to call lv_tick_inc */
-    const esp_timer_create_args_t periodic_timer_args = {
-        .callback = &lv_tick_task,
-        .name = "periodic_gui"
-    };
-    esp_timer_handle_t periodic_timer;
-    ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
-}
-
-static void init_lvgl_objs(){
-    lv_obj_t * passkey_scr  = lv_obj_create(NULL, NULL);
-    lv_obj_t * nav_scr  = lv_obj_create(NULL, NULL);
-
-    for(int i = 0;i < DIGITS_IN_ROW_COUNT;i++){
-        passkey_digits_row_top[i] = lv_img_create(passkey_scr,NULL);
-        passkey_digits_row_bottom[i] = lv_img_create(passkey_scr,NULL);
-        meters_digits[i] = lv_img_create(nav_scr,NULL);
-        
-        lv_img_set_src(passkey_digits_row_top[i],digits[0]);
-        lv_img_set_src(passkey_digits_row_bottom[i],digits[0]);
-        lv_img_set_src(meters_digits[i],digits[0]);
-
-        lv_obj_align(passkey_digits_row_top[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_TOP_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
-        lv_obj_align(passkey_digits_row_bottom[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
-        lv_obj_align(meters_digits[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
-    }
-    lv_scr_load(nav_scr);
-}
 
 static void lv_tick_task(void *arg) {
     (void) arg;

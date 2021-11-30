@@ -129,7 +129,7 @@ esp_err_t init_komoot_ble_client(uint32_t* _passkey_pointer,struct nav_data_t* _
     return ESP_OK;
 }
 
-static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
     uint8_t *adv_name = NULL;
     uint8_t adv_name_len = 0;
@@ -262,7 +262,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
     }
 }
 
-static void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
+void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
 {
     /* If event is register event, store the gattc_if for each profile */
     if (event == ESP_GATTC_REG_EVT) {
@@ -291,7 +291,7 @@ static void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp
     } while (0);
 }
 
-static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
+void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
 {
     esp_ble_gattc_cb_param_t *p_data = (esp_ble_gattc_cb_param_t *)param;
 
@@ -526,7 +526,7 @@ void resolve_nav_data(uint8_t* data,struct nav_data_t* target){
     strcpy(target->street,(char*) &data[9]);
 }
 
-static char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req){
+char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req){
    char *auth_str = NULL;
    switch(auth_req) {
     case ESP_LE_AUTH_NO_BOND:
@@ -562,7 +562,7 @@ static char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req){
 }
 
 
-static const char *esp_key_type_to_str(esp_ble_key_type_t key_type){
+const char *esp_key_type_to_str(esp_ble_key_type_t key_type){
    const char *key_str = NULL;
    switch(key_type) {
     case ESP_LE_KEY_NONE:

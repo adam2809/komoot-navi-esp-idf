@@ -12,6 +12,9 @@
         "tuple": "c",
         "type_traits": "c",
         "utility": "c",
-        "esp_gatt_common_api.h": "c"
+        "esp_gatt_common_api.h": "c",
+        "digit_imgs.h": "c",
+        "komoot_ble_client.h": "c",
+        "display.h": "c"
     }
 }
