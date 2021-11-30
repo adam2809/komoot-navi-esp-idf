@@ -1,8 +1,16 @@
 IMAGE_CONVERTER_PATH='/home/andek/code/lv_img_conv/lv_img_conv.js'
-ARG_COUNT=4
+ARG_COUNT=3
 
 import sys
 import os
+
+
+def convert_images_to_c_files(img_files,dest_dir,root):
+    for img in img_files:
+        cmd = f"{IMAGE_CONVERTER_PATH} {os.path.join(root, img)} -f -c CF_INDEXED_1_BIT -o {os.path.join(dest_dir,os.path.splitext(img)[0])}.c"
+        print(f'Executing lv_img_conv')
+        print(cmd)
+        os.system(cmd)
 
 # ./lv_img_conv.js ../komoot-navi-esp-idf/images/numbers/two.png -c CF_INDEXED_1_BIT -o ../two.c
 def main():
@@ -15,14 +23,10 @@ def main():
     if 'tmp' not in dirs:
         os.mkdir(tmp_dir)
 
-    print(tmp_dir)
+    # convert_images_to_c_files([file for file in filenames os.path.join(root, file)])
+    convert_images_to_c_files(filenames,tmp_dir,root)
+    
 
-
-def convert_images_to_c_files(img_files,dest_dir):
-    for img in img_files:
-        cmd = f"{IMAGE_CONVERTER_PATH} {os.path.join(root, file)} -c CF_INDEXED_1_BIT -o {os.path.join(tmp_dir,os.path.splitext(file)[0])}.c"
-        print(cmd)
-        os.system(cmd)
 
     
 
