@@ -12,6 +12,16 @@ def convert_images_to_c_files(img_files,dest_dir,root):
         print(cmd)
         os.system(cmd)
 
+def write_c_file(source_dir):
+    cmd = f'> {sys.argv[2]}'
+    print(cmd)
+    os.system(cmd)
+    cmd = f'cat {source_dir}/* >> {sys.argv[2]}'
+    print(cmd)
+    os.system(cmd)
+
+
+
 # ./lv_img_conv.js ../komoot-navi-esp-idf/images/numbers/two.png -c CF_INDEXED_1_BIT -o ../two.c
 def main():
     if len(sys.argv) != ARG_COUNT:
@@ -25,7 +35,7 @@ def main():
 
     # convert_images_to_c_files([file for file in filenames os.path.join(root, file)])
     convert_images_to_c_files(filenames,tmp_dir,root)
-    
+    write_c_file(tmp_dir)
 
 
     
