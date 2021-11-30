@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include "lvgl_helpers.h"
+#include "sdkconfig.h"
 
 #define DIGIT_1_Y_OFFSET -2
-#define DIGIT_2_Y_OFFSET -22
-#define DIGIT_3_Y_OFFSET -42
+#define DIGIT_Y_SPACING 20
+
 #define DIGITS_ROW_TOP_X_OFFSET 17
-#define DIGITS_ROW_BOTTOM_X_OFFSET 49
+#define DIGITS_ROW_BOTTOM_X_OFFSET 79
 
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
 #define LV_ATTRIBUTE_MEM_ALIGN

@@ -52,8 +52,14 @@ struct nav_data_t curr_nav_data = {0,0,{0}};
 
 TaskHandle_t display_nav_task_handle = NULL;
 
-lv_obj_t * digit_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
-lv_obj_t * digit_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
+
+lv_obj_t* nav_scr;
+lv_obj_t* passkey_scr;
+
+lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
+lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
+
+lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
 
 
 #define LV_TICK_PERIOD_MS 1
@@ -119,26 +125,26 @@ void  display_task_new(void *pvParameter){
     init_lvgl_display(buf);
     init_lvgl_objs();
 
-    int counter = 0;
+    uint32_t ulNotifiedValue;
     while (1) {
-        /* Delay 1 tick (assumes FreeRTOS tick is 10ms */
-        vTaskDelay(pdMS_TO_TICKS(10));
+        // xTaskNotifyWait(
+        //     0x00,      /* Don't clear any notification bits on entry. */
+        //     ULONG_MAX, /* Reset the notification value to 0 on exit. */
+        //     &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+        //     portMAX_DELAY
+        // );
+        // ESP_LOGI(GATTC_TAG,"Display task got notification with value %d",ulNotifiedValue);
 
-        counter%=1000;
-        ESP_LOGI(NAV_TAG,"Counter: %d",counter);
-        lv_img_set_src(digit_row_top[2], digits[counter%10]);
-        if(counter > 9){
-          lv_img_set_src(digit_row_top[1], digits[(counter%100)/10]);
-        }else{
-          lv_img_set_src(digit_row_top[1], digits[0]);
-        }
-        if(counter > 99){
-          lv_img_set_src(digit_row_top[0], digits[counter/100]);
-        }else{
-          lv_img_set_src(digit_row_top[0], digits[0]);
-        }
-        counter++;
-        /* Try to take the semaphore, call lvgl related function on success */
+        // if(ulNotifiedValue == NOTIFY_VALUE_NAVIGATION){
+        //     if(curr_nav_data.direction!=0){
+        //         // display_nav_symbol(nav_symbols[curr_nav_data.direction]);
+        //     }
+            
+        //     display_meters(curr_nav_data.distance);
+        // }else if(ulNotifiedValue == NOTIFY_VALUE_PASSKEY){
+        //     // display passkey
+        // }
+
         if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
             ESP_LOGD(NAV_TAG,"Calling task handler");
             lv_task_handler();
@@ -188,28 +194,23 @@ static void init_lvgl_display(lv_color_t* buf) {
 }
 
 static void init_lvgl_objs(){
-    lv_obj_t * scr = lv_disp_get_scr_act(NULL);
+    lv_obj_t * passkey_scr  = lv_obj_create(NULL, NULL);
+    lv_obj_t * nav_scr  = lv_obj_create(NULL, NULL);
 
     for(int i = 0;i < DIGITS_IN_ROW_COUNT;i++){
-        if(digit_row_bottom[i] != NULL || digit_row_top[i] != NULL){
-            ESP_LOGE(NAV_TAG,"DUPADUASODJIASDJIA");
-        }
-        digit_row_top[i] = lv_img_create(scr,NULL);
-        digit_row_bottom[i] = lv_img_create(scr,NULL);
+        passkey_digits_row_top[i] = lv_img_create(passkey_scr,NULL);
+        passkey_digits_row_bottom[i] = lv_img_create(passkey_scr,NULL);
+        meters_digits[i] = lv_img_create(nav_scr,NULL);
         
-        lv_img_set_src(digit_row_top[i],digits[i]);
-        lv_img_set_src(digit_row_bottom[i],digits[i+4]);
+        lv_img_set_src(passkey_digits_row_top[i],digits[0]);
+        lv_img_set_src(passkey_digits_row_bottom[i],digits[0]);
+        lv_img_set_src(meters_digits[i],digits[0]);
 
-        
+        lv_obj_align(passkey_digits_row_top[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_TOP_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
+        lv_obj_align(passkey_digits_row_bottom[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
+        lv_obj_align(meters_digits[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
     }
-
-    lv_obj_align(digit_row_top[0], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_TOP_X_OFFSET,DIGIT_1_Y_OFFSET);
-    lv_obj_align(digit_row_top[1], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_TOP_X_OFFSET, DIGIT_2_Y_OFFSET);
-    lv_obj_align(digit_row_top[2], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_TOP_X_OFFSET, DIGIT_3_Y_OFFSET);
-
-    lv_obj_align(digit_row_bottom[0], NULL, LV_ALIGN_IN_BOTTOM_RIGHT,-DIGITS_ROW_TOP_X_OFFSET,DIGIT_1_Y_OFFSET);
-    lv_obj_align(digit_row_bottom[1], NULL, LV_ALIGN_IN_BOTTOM_RIGHT,-DIGITS_ROW_TOP_X_OFFSET, DIGIT_2_Y_OFFSET);
-    lv_obj_align(digit_row_bottom[2], NULL, LV_ALIGN_IN_BOTTOM_RIGHT,-DIGITS_ROW_TOP_X_OFFSET, DIGIT_3_Y_OFFSET);
+    lv_scr_load(nav_scr);
 }
 
 static void lv_tick_task(void *arg) {
