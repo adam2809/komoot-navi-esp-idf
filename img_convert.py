@@ -29,6 +29,48 @@ def write_c_file(source_dir):
     cmd = f'cat {source_dir}/* >> {sys.argv[2]}'
     print(cmd)
     os.system(cmd)
+# #ifndef _MISC_IMGS_H
+# #define _MISC_IMGS_H
+# #include <stdio.h>
+# #include "lvgl_helpers.h"
+# const lv_img_dsc_t greater_than;
+# const lv_img_dsc_t km;
+# const lv_img_dsc_t bt_icon;
+# #endif
+h_file_path = sys.argv[3]
+def write_h_file(filenames):
+    cmd = f'> {h_file_path}'
+    print(cmd)
+    os.system(cmd)
+
+    include_guard_define_name = os.path.splitext(os.path.split(h_file_path)[1])[0].upper()
+
+    cmd = f'echo "#ifndef _{include_guard_define_name}" >> {h_file_path}'
+    print(cmd)
+    os.system(cmd)
+
+    cmd = f'echo "#define _{include_guard_define_name}" >> {h_file_path}'
+    print(cmd)
+    os.system(cmd)
+
+    cmd = f'echo "#include \\"lvgl_helpers.h\\"" >> {h_file_path}'
+    print(cmd)
+    os.system(cmd)
+
+    cmd = f'echo "#include <stdio.h>" >> {h_file_path}'
+    print(cmd)
+    os.system(cmd)
+
+    for f in filenames:
+        cmd = f'echo "const lv_img_dsc_t {os.path.splitext(f)[0]};" >> {h_file_path}'
+        print(cmd)
+        os.system(cmd)
+
+    cmd = f'echo "#endif" >> {h_file_path}'
+    print(cmd)
+    os.system(cmd)
+
+    
 
 
 
@@ -43,9 +85,9 @@ def main():
     if 'tmp' not in dirs:
         os.mkdir(tmp_dir)
 
-    # convert_images_to_c_files([file for file in filenames os.path.join(root, file)])
     convert_images_to_c_files(filenames,tmp_dir,root)
     write_c_file(tmp_dir)
+    write_h_file(filenames)
 
 
     

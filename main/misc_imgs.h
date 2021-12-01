@@ -1,7 +1,8 @@
-#ifndef _MISC_IMGS_H
-#define _MISC_IMGS_H
-#include <stdio.h>
+#ifndef _MISC_IMGS
+#define _MISC_IMGS
 #include "lvgl_helpers.h"
-const lv_img_dsc_t greater_than;
+#include <stdio.h>
 const lv_img_dsc_t km;
+const lv_img_dsc_t greater_than;
+const lv_img_dsc_t bt_icon;
 #endif

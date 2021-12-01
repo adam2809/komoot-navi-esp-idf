@@ -20,6 +20,7 @@
         "freertos.h": "c",
         "*.tcc": "c",
         "chrono": "c",
-        "limits": "c"
+        "limits": "c",
+        "misc_imgs.h": "c"
     }
 }
