@@ -11,6 +11,17 @@
         "functional": "c",
         "tuple": "c",
         "type_traits": "c",
-        "utility": "c"
+        "utility": "c",
+        "esp_gatt_common_api.h": "c",
+        "digit_imgs.h": "c",
+        "komoot_ble_client.h": "c",
+        "display.h": "c",
+        "esp_log.h": "c",
+        "freertos.h": "c",
+        "*.tcc": "c",
+        "chrono": "c",
+        "limits": "c",
+        "misc_imgs.h": "c",
+        "dir_symbols_imgs.h": "c"
     }
 }
