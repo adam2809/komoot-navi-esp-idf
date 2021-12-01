@@ -8,6 +8,7 @@ lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
 
 lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
+lv_obj_t * dir_symbol = NULL;
 
 void init_lvgl_display(lv_color_t* buf) {
 
@@ -53,7 +54,9 @@ void init_lvgl_objs(){
         lv_obj_align(passkey_digits_row_bottom[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
         lv_obj_align(meters_digits[i], NULL, LV_ALIGN_IN_BOTTOM_LEFT,DIGITS_ROW_BOTTOM_X_OFFSET,DIGIT_1_Y_OFFSET-DIGIT_Y_SPACING*i);
     }
-    // lv_scr_load(nav_scr);
+
+    dir_symbol = lv_img_create(nav_scr,NULL);
+
 }
 
 void display_number_row(uint32_t row_content,lv_obj_t* row[]){
@@ -81,7 +84,7 @@ void display_passkey(uint32_t passkey){
 }
 
 void display_nav_symbol(uint8_t symbol){
-
+    lv_img_set_src(dir_symbol,dir_symbols_imgs[symbol]);
 }
 
 void display_meters(uint32_t meters){

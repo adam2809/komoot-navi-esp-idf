@@ -5,6 +5,7 @@
 
 #include "digit_imgs.h"
 #include "misc_imgs.h"
+#include "dir_symbols_imgs.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 
