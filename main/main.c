@@ -46,7 +46,7 @@
 #define LV_TICK_PERIOD_MS 1
 
 uint32_t curr_passkey=123456;
-struct nav_data_t curr_nav_data = {8,432,{0}};
+struct nav_data_t curr_nav_data = {0,0,{0}};
 
 TaskHandle_t display_nav_task_handle = NULL;
 
@@ -70,35 +70,12 @@ void app_main(){
     }
     ESP_ERROR_CHECK( ret );
 
-    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
+    init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
     xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
-    xTaskCreate(&test_task, "test_task", 4098, NULL, 5, NULL);
+    // xTaskCreate(&test_task, "test_task", 4098, NULL, 5, NULL);
 }
 
-
-void display_task(void *pvParameter){
-    uint32_t ulNotifiedValue;
-    while(1){
-        xTaskNotifyWait(
-            0x00,      /* Don't clear any notification bits on entry. */
-            ULONG_MAX, /* Reset the notification value to 0 on exit. */
-            &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
-            portMAX_DELAY
-        );
-        ESP_LOGI(GATTC_TAG,"Display task got notification with value %d",ulNotifiedValue);
-
-        if(ulNotifiedValue == NOTIFY_VALUE_NAVIGATION){
-            if(curr_nav_data.direction!=0){
-                // display_nav_symbol(nav_symbols[curr_nav_data.direction]);
-            }
-            
-            display_meters(curr_nav_data.distance);
-        }else if(ulNotifiedValue == NOTIFY_VALUE_PASSKEY){
-            display_passkey(curr_passkey);
-        }
-    }
-}
 
 SemaphoreHandle_t xGuiSemaphore;
 
@@ -132,8 +109,8 @@ void  display_task_new(void *pvParameter){
         ESP_LOGI(GATTC_TAG,"Display task got notification with value %d",ulNotifiedValue);
 
         if(ulNotifiedValue == NOTIFY_VALUE_NAVIGATION){
-            if(curr_nav_data.direction!=0){
-                display_nav_symbol(curr_nav_data.direction);
+            if(curr_nav_data.direction!=13&&curr_nav_data.direction!=14&&curr_nav_data.direction!=31){
+                display_dir_symbol(curr_nav_data.direction);
             }
             
             display_meters(curr_nav_data.distance);

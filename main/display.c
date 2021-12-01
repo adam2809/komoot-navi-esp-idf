@@ -83,7 +83,7 @@ void display_passkey(uint32_t passkey){
 
 }
 
-void display_nav_symbol(uint8_t symbol){
+void display_dir_symbol(uint8_t symbol){
     lv_img_set_src(dir_symbol,dir_symbols_imgs[symbol]);
 }
 
