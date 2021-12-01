@@ -8,6 +8,7 @@ ARG_COUNT=4
 
 import sys
 import os
+from shutil import rmtree
 
 
 def convert_images_to_c_files(img_files,dest_dir,root):
@@ -88,6 +89,8 @@ def main():
     convert_images_to_c_files(filenames,tmp_dir,root)
     write_c_file(tmp_dir)
     write_h_file(filenames)
+
+    rmtree(tmp_dir);
 
 
     
