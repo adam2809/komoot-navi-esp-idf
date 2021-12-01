@@ -46,7 +46,7 @@
 #define LV_TICK_PERIOD_MS 1
 
 uint32_t curr_passkey=123456;
-struct nav_data_t curr_nav_data = {0,543,{0}};
+struct nav_data_t curr_nav_data = {0,1500,{0}};
 
 TaskHandle_t display_nav_task_handle = NULL;
 

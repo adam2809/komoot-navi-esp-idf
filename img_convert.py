@@ -1,5 +1,10 @@
+# Command line arguments:
+# 1. Source of pdf images
+# 2. Target .c file
+# 3. Target .h file 
+
 IMAGE_CONVERTER_PATH='/home/andek/code/lv_img_conv/lv_img_conv.js'
-ARG_COUNT=3
+ARG_COUNT=4
 
 import sys
 import os
@@ -16,6 +21,11 @@ def write_c_file(source_dir):
     cmd = f'> {sys.argv[2]}'
     print(cmd)
     os.system(cmd)
+
+    cmd = f'echo "#include \\"{os.path.split(sys.argv[3])[1]}\\"" >> {sys.argv[2]}'
+    print(cmd)
+    os.system(cmd)
+
     cmd = f'cat {source_dir}/* >> {sys.argv[2]}'
     print(cmd)
     os.system(cmd)

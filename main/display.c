@@ -88,5 +88,11 @@ void display_meters(uint32_t meters){
     ESP_LOGI(DISPLAY_TAG,"Displaing meters: %d",meters);
     lv_scr_load(nav_scr);
 
-    display_number_row(meters < 1000 ? meters : 999,meters_digits);
+    if(meters < 1000){
+        display_number_row(meters < 1000 ? meters : 999,meters_digits);
+    }else{
+        lv_img_set_src(meters_digits[0],&greater_than);
+        lv_img_set_src(meters_digits[1],digits[1]);
+        lv_img_set_src(meters_digits[2],&km);
+    }
 }

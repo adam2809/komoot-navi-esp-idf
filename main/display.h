@@ -4,6 +4,7 @@
 #define DISPLAY_TAG "DISPLAY"
 
 #include "digit_imgs.h"
+#include "misc_imgs.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 
