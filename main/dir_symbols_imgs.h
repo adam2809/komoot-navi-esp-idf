@@ -32,4 +32,6 @@ const lv_img_dsc_t ic_nav_roundabout_ccw1_2;
 const lv_img_dsc_t ic_nav_arrow_goto_start;
 const lv_img_dsc_t ic_nav_arrow_start;
 const lv_img_dsc_t ic_nav_roundabout_cw1_2;
+const lv_img_dsc_t not_defined;
+const lv_img_dsc_t* dir_symbols_imgs[];
 #endif

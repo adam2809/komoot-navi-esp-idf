@@ -2609,53 +2609,40 @@ const lv_img_dsc_t ic_nav_roundabout_fallback = {
   .header.cf = LV_IMG_CF_INDEXED_1BIT,
   .data = ic_nav_roundabout_fallback_map,
 };
-#ifdef LV_LVGL_H_INCLUDE_SIMPLE
-#include "lvgl.h"
-#else
-#include "lvgl/lvgl.h"
-#endif
 
-#ifndef LV_ATTRIBUTE_MEM_ALIGN
-#define LV_ATTRIBUTE_MEM_ALIGN
-#endif
-#ifndef LV_ATTRIBUTE_IMG_TWO
-#define LV_ATTRIBUTE_IMG_TWO
-#endif
-const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_IMG_TWO uint8_t two_map[] = {
-  0xff, 0xff, 0xff, 0xff, 	/*Color of index 0*/
-  0x00, 0x00, 0x00, 0xff, 	/*Color of index 1*/
+const lv_img_dsc_t not_defined = {};
 
-  0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 
-  0x03, 0xe0, 0x00, 0x1c, 
-  0x0f, 0xfc, 0x00, 0x1c, 
-  0x1f, 0xfe, 0x00, 0x1c, 
-  0x3e, 0x7f, 0x00, 0x1c, 
-  0x78, 0x0f, 0x80, 0x1c, 
-  0x70, 0x03, 0xc0, 0x1c, 
-  0x60, 0x01, 0xe0, 0x1c, 
-  0xe0, 0x00, 0xf8, 0x1c, 
-  0xe0, 0x00, 0x7c, 0x1c, 
-  0xe0, 0x00, 0x3e, 0x1c, 
-  0xe0, 0x00, 0x1f, 0x1c, 
-  0xe0, 0x00, 0x0f, 0x9c, 
-  0x60, 0x00, 0x07, 0xdc, 
-  0x60, 0x00, 0x01, 0xfc, 
-  0x70, 0x00, 0x00, 0xfc, 
-  0x70, 0x00, 0x00, 0x7c, 
-  0x38, 0x00, 0x00, 0x3c, 
-  0x38, 0x00, 0x00, 0x1c, 
-};
-
-const lv_img_dsc_t two = {
-  .header.always_zero = 0,
-  .header.w = 30,
-  .header.h = 24,
-  .data_size = 105,
-  .header.cf = LV_IMG_CF_INDEXED_1BIT,
-  .data = two_map,
+const lv_img_dsc_t* dir_symbols_imgs[] = {
+  &ic_nav_arrow_goto_start,
+  &ic_nav_arrow_keep_going,
+  &ic_nav_arrow_start,
+  &ic_nav_arrow_finish,
+  &ic_nav_arrow_keep_left,
+  &ic_nav_arrow_turn_left,
+  &ic_nav_arrow_turn_hard_left,
+  &ic_nav_arrow_turn_hard_right,
+  &ic_nav_arrow_turn_right,
+  &ic_nav_arrow_keep_right,
+  &ic_nav_arrow_fork_right,
+  &ic_nav_arrow_fork_left,
+  &ic_nav_arrow_uturn,
+  &not_defined,
+  &not_defined,
+  &ic_nav_roundabout_exit_cw,
+  &ic_nav_roundabout_exit_ccw,
+  &ic_nav_roundabout_ccw1_1,
+  &ic_nav_roundabout_ccw1_2,
+  &ic_nav_roundabout_ccw1_3,
+  &ic_nav_roundabout_ccw2_2,
+  &ic_nav_roundabout_ccw2_3,
+  &ic_nav_roundabout_ccw3_3,
+  &ic_nav_roundabout_cw1_1,
+  &ic_nav_roundabout_cw1_2,
+  &ic_nav_roundabout_cw1_3,
+  &ic_nav_roundabout_cw2_2,
+  &ic_nav_roundabout_cw2_3,
+  &ic_nav_roundabout_cw3_3,
+  &ic_nav_roundabout_fallback,
+  &ic_nav_outof_route,
+  &not_defined,
 };

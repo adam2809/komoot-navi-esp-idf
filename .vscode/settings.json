@@ -21,6 +21,7 @@
         "*.tcc": "c",
         "chrono": "c",
         "limits": "c",
-        "misc_imgs.h": "c"
+        "misc_imgs.h": "c",
+        "dir_symbols_imgs.h": "c"
     }
 }
