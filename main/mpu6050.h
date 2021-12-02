@@ -14,5 +14,14 @@
 #define MPU6050_ADDRESS 0x68 //AD0 is 0
 #define PWR_MGMT_2       0x6C
 
+#define MPU6050_GYRO_XOUT_H  0x43
+#define MPU6050_ACCEL_XOUT_H 0x3B
+
+typedef struct{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+} val_3d;
 
 void configure_mpu(int sens);
+void read_3d_reg_value(val_3d* val,uint32_t reg,uint8_t* data);

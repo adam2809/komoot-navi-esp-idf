@@ -146,7 +146,7 @@ void test_task(void *pvParameter){
     gpio_config(&io_conf);
 
     while(1){
-        vTaskDelay(1/portTICK_PERIOD_MS);
+        vTaskDelay(100/portTICK_PERIOD_MS);
         
         ESP_LOGI(NAV_TAG,"MPU interrupt pin is: %d",gpio_get_level(MPU6050_INTERRUPT_INPUT_PIN));
     }
@@ -158,16 +158,27 @@ static void lv_tick_task(void *arg) {
     lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
-void alarm_task(void *pvParameter){
-    vTaskDelay(1000*10/portTICK_PERIOD_MS);
-    configure_mpu(10);
-
-
+void go_to_deep_sleep(){
     if(rtc_gpio_pullup_en(MPU6050_INTERRUPT_INPUT_PIN)){
         ESP_LOGE(NAV_TAG,"Could not pull up gpio %d",MPU6050_INTERRUPT_INPUT_PIN);
     }
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
     esp_deep_sleep_start();
+}
+
+void alarm_task(void *pvParameter){
+    vTaskDelay(100/portTICK_PERIOD_MS);
+    
+    configure_mpu(10);
+
+    uint8_t read_data[6];
+    val_3d accel_val;
+    while(1){
+        vTaskDelay(100/portTICK_PERIOD_MS);
+
+        read_3d_reg_value(&accel_val,MPU6050_ACCEL_XOUT_H,read_data);
+		ESP_LOGI(NAV_TAG, "x: %d, y: %d, z: %d", accel_val.x, accel_val.y, accel_val.z);
+    }
 
     vTaskDelete(NULL);
 }

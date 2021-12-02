@@ -23,6 +23,13 @@
         "limits": "c",
         "misc_imgs.h": "c",
         "dir_symbols_imgs.h": "c",
-        "i2c_manager.h": "c"
+        "i2c_manager.h": "c",
+        "*.ipp": "c",
+        "string": "c",
+        "vector": "c",
+        "string_view": "c",
+        "sstream": "c",
+        "streambuf": "c",
+        "mpu6050.h": "c"
     }
 }
