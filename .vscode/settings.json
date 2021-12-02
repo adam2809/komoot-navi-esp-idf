@@ -22,6 +22,7 @@
         "chrono": "c",
         "limits": "c",
         "misc_imgs.h": "c",
-        "dir_symbols_imgs.h": "c"
+        "dir_symbols_imgs.h": "c",
+        "i2c_manager.h": "c"
     }
 }

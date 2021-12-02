@@ -59,6 +59,7 @@ void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
 void  display_task_new(void *pvParameter);
 void test_task(void *pvParameter);
+void alarm_task(void *pvParameter);
 
 
 
@@ -70,9 +71,10 @@ void app_main(){
     }
     ESP_ERROR_CHECK( ret );
 
-    init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
+    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
     xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
+    xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
     // xTaskCreate(&test_task, "test_task", 4098, NULL, 5, NULL);
 }
 
@@ -150,3 +152,36 @@ static void lv_tick_task(void *arg) {
 
     lv_tick_inc(LV_TICK_PERIOD_MS);
 }
+
+#define MPU6050_ACCEL_XOUT_H 0x3B
+#define MPU6050_GYRO_XOUT_H 0x43
+#define MPU6050_PWR_MGMT_1   0x6B
+
+void alarm_task(void *pvParameter){
+    vTaskDelay(500/portTICK_PERIOD_MS);
+    
+    ESP_LOGI(NAV_TAG,"Writing pwr");
+    const uint8_t data_write = 0;
+    // const uint8_t data = 1;
+    i2c_manager_write(I2C_NUM_0,(uint16_t) 0x68,MPU6050_PWR_MGMT_1, &data_write, 1);
+    // ESP_LOGI(NAV_TAG,"Writing accel");
+    // i2c_manager_write(I2C_NUM_0,(uint16_t) 0x68,MPU6050_ACCEL_XOUT_H, NULL, 0);
+	uint16_t accel_x;
+	uint16_t accel_y;
+	uint16_t accel_z;
+    while(1){
+        vTaskDelay(100/portTICK_PERIOD_MS);
+        
+        uint8_t data_read[6];
+
+        i2c_manager_read(I2C_NUM_0,(uint16_t) 0x68,MPU6050_GYRO_XOUT_H, data_read, 6);
+
+		accel_x = (data_read[0] << 8) | data_read[1];
+		accel_y = (data_read[2] << 8) | data_read[3];
+		accel_z = (data_read[4] << 8) | data_read[5];
+		ESP_LOGI(NAV_TAG, "accel_x: %d, accel_y: %d, accel_z: %d", accel_x, accel_y, accel_z);
+    }
+
+    vTaskDelete(NULL);
+}
+
