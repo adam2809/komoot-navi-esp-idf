@@ -35,14 +35,19 @@
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 
+#include "driver/rtc_io.h"
+#include "esp_sleep.h"
+
 #include "esp_log.h"
 
 #include "komoot_ble_client.h"
 #include "display.h"
+#include "mpu6050.h"
+
 
 
 #define NAV_TAG "NAVIGATION_DISPLAY"
-
+#define MPU6050_INTERRUPT_INPUT_PIN GPIO_NUM_13
 #define LV_TICK_PERIOD_MS 1
 
 uint32_t curr_passkey=123456;
@@ -71,7 +76,7 @@ void app_main(){
     }
     ESP_ERROR_CHECK( ret );
 
-    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
+    init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
     xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
@@ -132,18 +137,18 @@ void  display_task_new(void *pvParameter){
 }
 
 void test_task(void *pvParameter){
-    bool flag = false;
-    while(1){
-        vTaskDelay(1000/portTICK_PERIOD_MS);
-        
-        xTaskNotify(
-            display_nav_task_handle,
-            flag ? NOTIFY_VALUE_NAVIGATION : NOTIFY_VALUE_PASSKEY,
-            eSetValueWithOverwrite
-        );
-        ESP_LOGI(GATTC_TAG,"Sending notification with value %d",flag ? NOTIFY_VALUE_NAVIGATION : NOTIFY_VALUE_PASSKEY);
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = 1ULL << MPU6050_INTERRUPT_INPUT_PIN;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 0;    
+    gpio_config(&io_conf);
 
-        flag = !flag;
+    while(1){
+        vTaskDelay(1/portTICK_PERIOD_MS);
+        
+        ESP_LOGI(NAV_TAG,"MPU interrupt pin is: %d",gpio_get_level(MPU6050_INTERRUPT_INPUT_PIN));
     }
 }
 
@@ -153,34 +158,16 @@ static void lv_tick_task(void *arg) {
     lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
-#define MPU6050_ACCEL_XOUT_H 0x3B
-#define MPU6050_GYRO_XOUT_H 0x43
-#define MPU6050_PWR_MGMT_1   0x6B
-
 void alarm_task(void *pvParameter){
-    vTaskDelay(500/portTICK_PERIOD_MS);
-    
-    ESP_LOGI(NAV_TAG,"Writing pwr");
-    const uint8_t data_write = 0;
-    // const uint8_t data = 1;
-    i2c_manager_write(I2C_NUM_0,(uint16_t) 0x68,MPU6050_PWR_MGMT_1, &data_write, 1);
-    // ESP_LOGI(NAV_TAG,"Writing accel");
-    // i2c_manager_write(I2C_NUM_0,(uint16_t) 0x68,MPU6050_ACCEL_XOUT_H, NULL, 0);
-	uint16_t accel_x;
-	uint16_t accel_y;
-	uint16_t accel_z;
-    while(1){
-        vTaskDelay(100/portTICK_PERIOD_MS);
-        
-        uint8_t data_read[6];
+    vTaskDelay(1000*10/portTICK_PERIOD_MS);
+    configure_mpu(10);
 
-        i2c_manager_read(I2C_NUM_0,(uint16_t) 0x68,MPU6050_GYRO_XOUT_H, data_read, 6);
 
-		accel_x = (data_read[0] << 8) | data_read[1];
-		accel_y = (data_read[2] << 8) | data_read[3];
-		accel_z = (data_read[4] << 8) | data_read[5];
-		ESP_LOGI(NAV_TAG, "accel_x: %d, accel_y: %d, accel_z: %d", accel_x, accel_y, accel_z);
+    if(rtc_gpio_pullup_en(MPU6050_INTERRUPT_INPUT_PIN)){
+        ESP_LOGE(NAV_TAG,"Could not pull up gpio %d",MPU6050_INTERRUPT_INPUT_PIN);
     }
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
+    esp_deep_sleep_start();
 
     vTaskDelete(NULL);
 }
