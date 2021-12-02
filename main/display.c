@@ -11,6 +11,7 @@ lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * dir_symbol = NULL;
 
 void init_lvgl_display(lv_color_t* buf) {
+    lvgl_i2c_locking(i2c_manager_locking());
 
     lv_init();
 
