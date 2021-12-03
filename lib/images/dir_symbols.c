@@ -1,4 +1,4 @@
-#include "dir_symbols_imgs.h"
+#include "dir_symbols.h"
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
 #include "lvgl.h"
 #else

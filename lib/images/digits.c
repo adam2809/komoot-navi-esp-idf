@@ -1,4 +1,4 @@
-#include "digit_imgs.h"
+#include "digits.h"
 
 const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_IMG_ZERO uint8_t zero_map[] = {
   0xff, 0xff, 0xff, 0xff, 	/*Color of index 0*/

@@ -1,4 +1,4 @@
-#include "misc_imgs.h"
+#include "misc.h"
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
 #include "lvgl.h"
 #else

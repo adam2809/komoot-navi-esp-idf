@@ -30,6 +30,7 @@
         "string_view": "c",
         "sstream": "c",
         "streambuf": "c",
-        "mpu6050.h": "c"
+        "mpu6050.h": "c",
+        "rtc_io.h": "c"
     }
 }

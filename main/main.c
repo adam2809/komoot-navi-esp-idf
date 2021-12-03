@@ -54,9 +54,6 @@ struct nav_data_t curr_nav_data = {0,0,{0}};
 
 TaskHandle_t display_nav_task_handle = NULL;
 
-
-
-
 #define LV_TICK_PERIOD_MS 1
 
 void display_task(void *pvParameter);
@@ -78,8 +75,8 @@ void app_main(){
     // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
     xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
-    xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
-    xTaskCreate(&poll_mtu_task_queue_task, "poll_mtu_task_queue_task", 4098, NULL, 5, NULL);
+    // xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
+    // xTaskCreate(&poll_mtu_task_queue_task, "poll_mtu_task_queue_task", 4098, NULL, 5, NULL);
 }
 
 

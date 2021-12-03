@@ -1,6 +1,5 @@
 #include "display.h"
 
-#include "digit_imgs.h"
 lv_obj_t* nav_scr;
 lv_obj_t* passkey_scr;
 

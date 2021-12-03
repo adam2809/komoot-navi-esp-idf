@@ -3,9 +3,9 @@
 
 #define DISPLAY_TAG "DISPLAY"
 
-#include "digit_imgs.h"
-#include "misc_imgs.h"
-#include "dir_symbols_imgs.h"
+#include "digits.h"
+#include "misc.h"
+#include "dir_symbols.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include "i2c_manager.h"
