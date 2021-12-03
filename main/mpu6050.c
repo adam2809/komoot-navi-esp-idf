@@ -32,3 +32,24 @@ void read_3d_reg_value(val_3d* val,uint32_t reg,uint8_t* data){
     val->y = (data[2] << 8) | data[3];
 }
 
+xQueueHandle mpu_event_queue = NULL;
+void IRAM_ATTR mpu_isr_handler(void* arg){
+    uint32_t gpio_num = (uint32_t) MPU6050_INTERRUPT_INPUT_PIN;
+    xQueueSendFromISR(mpu_event_queue, &gpio_num, NULL);
+}
+
+void init_mpu_interrupt(){
+        gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_NEGEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = 1ULL << MPU6050_INTERRUPT_INPUT_PIN;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 0;    
+    gpio_config(&io_conf);
+
+    mpu_event_queue = xQueueCreate(10, sizeof(uint32_t));
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(MPU6050_INTERRUPT_INPUT_PIN, mpu_isr_handler, (void*) MPU6050_INTERRUPT_INPUT_PIN);
+}
+
+

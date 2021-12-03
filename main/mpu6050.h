@@ -17,11 +17,18 @@
 #define MPU6050_GYRO_XOUT_H  0x43
 #define MPU6050_ACCEL_XOUT_H 0x3B
 
+#define MPU6050_INTERRUPT_INPUT_PIN GPIO_NUM_13
+
 typedef struct{
     int16_t x;
     int16_t y;
     int16_t z;
 } val_3d;
 
+xQueueHandle mpu_event_queue;
+
 void configure_mpu(int sens);
 void read_3d_reg_value(val_3d* val,uint32_t reg,uint8_t* data);
+
+void IRAM_ATTR mpu_isr_handler(void* arg);
+void init_mpu_interrupt();

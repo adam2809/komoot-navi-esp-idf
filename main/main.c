@@ -47,7 +47,6 @@
 
 
 #define NAV_TAG "NAVIGATION_DISPLAY"
-#define MPU6050_INTERRUPT_INPUT_PIN GPIO_NUM_13
 #define LV_TICK_PERIOD_MS 1
 
 uint32_t curr_passkey=123456;
@@ -63,7 +62,7 @@ TaskHandle_t display_nav_task_handle = NULL;
 void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
 void  display_task_new(void *pvParameter);
-void test_task(void *pvParameter);
+void poll_mtu_task_queue_task(void *pvParameter);
 void alarm_task(void *pvParameter);
 
 
@@ -76,11 +75,11 @@ void app_main(){
     }
     ESP_ERROR_CHECK( ret );
 
-    init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
+    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
     xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
-    // xTaskCreate(&test_task, "test_task", 4098, NULL, 5, NULL);
+    xTaskCreate(&poll_mtu_task_queue_task, "poll_mtu_task_queue_task", 4098, NULL, 5, NULL);
 }
 
 
@@ -136,19 +135,14 @@ void  display_task_new(void *pvParameter){
     vTaskDelete(NULL);
 }
 
-void test_task(void *pvParameter){
-    gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = 1ULL << MPU6050_INTERRUPT_INPUT_PIN;
-    io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 0;    
-    gpio_config(&io_conf);
+void poll_mtu_task_queue_task(void *pvParameter){    
+    init_mpu_interrupt();
 
+    gpio_num_t interrupt_gpio = MPU6050_INTERRUPT_INPUT_PIN;
     while(1){
-        vTaskDelay(100/portTICK_PERIOD_MS);
-        
-        ESP_LOGI(NAV_TAG,"MPU interrupt pin is: %d",gpio_get_level(MPU6050_INTERRUPT_INPUT_PIN));
+        if(xQueueReceive(mpu_event_queue,&interrupt_gpio, portMAX_DELAY)) {
+            ESP_LOGI(NAV_TAG,"Got interrpupt from mtu");
+        }
     }
 }
 
