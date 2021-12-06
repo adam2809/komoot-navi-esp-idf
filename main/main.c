@@ -180,12 +180,27 @@ void morse_password_input_task(void *pvParameter){
     button_event_t ev;
     QueueHandle_t button_events = button_init(PIN_BIT(BUTTON_PIN));
     char morse_password[MAX_PASSWORD_LENGTH] = {'\0'};
-    uint8_t curr_morse_char = 0;
-    uint8_t curr_morse_char_len = 0;
+    uint8_t morse_password_len = 0;
+    uint8_t morse_char = 0;
+    uint8_t morse_char_len = 0;
+    int64_t last_char_input_time = 0;
     char was_held_flag = false;
     
     while (true) {
-        if (xQueueReceive(button_events, &ev, 1000/portTICK_PERIOD_MS)) {
+        if (esp_timer_get_time() / 1000ULL - last_char_input_time > TIME_BETWEEN_LETTERS && morse_char_len != 0){
+            morse_password[morse_password_len] = bin_morse_2_char(morse_char,morse_char_len);
+            ESP_LOGI(NAV_TAG,"Morse password is %s", morse_password);
+            morse_password_len++;
+            morse_char_len = 0;
+            morse_char = 0;
+        }
+
+        if (esp_timer_get_time() / 1000ULL - last_char_input_time > TIME_BETWEEN_WORDS){
+            ESP_LOGI(NAV_TAG,"Morse password input finished");
+            break;
+        }
+        
+        if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
             if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
                 was_held_flag = true;
             }
@@ -195,11 +210,11 @@ void morse_password_input_task(void *pvParameter){
                 }else{
                     ESP_LOGI(NAV_TAG,"Got short");
                 }
-                curr_morse_char |= was_held_flag << curr_morse_char_len;
-                curr_morse_char_len++;
+                morse_char |= was_held_flag << morse_char_len;
+                morse_char_len++;
                 was_held_flag = false;
-                ESP_LOGI(NAV_TAG,"Curr morse char is %c", bin_morse_2_char(curr_morse_char,curr_morse_char_len));        
-                ESP_LOGI(NAV_TAG,"curr_morse_char = %d len = %d", curr_morse_char,curr_morse_char_len);        
+                last_char_input_time = esp_timer_get_time() / 1000ULL;
+                ESP_LOGI(NAV_TAG,"Morse char is %c", bin_morse_2_char(morse_char,morse_char_len));
             }
         }
     }
