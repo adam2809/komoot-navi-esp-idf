@@ -44,6 +44,7 @@
 #include "display.h"
 #include "mpu6050.h"
 #include "button.h"
+#include "morse.h"
 
 #define NAV_TAG "NAVIGATION_DISPLAY"
 #define LV_TICK_PERIOD_MS 1
@@ -60,7 +61,7 @@ static void lv_tick_task(void *arg);
 void  display_task_new(void *pvParameter);
 void poll_mtu_task_queue_task(void *pvParameter);
 void alarm_task(void *pvParameter);
-void buttons_task(void *pvParameter);
+void morse_password_input_task(void *pvParameter);
 
 
 
@@ -76,7 +77,7 @@ void app_main(){
     
     // xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     // xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
-    xTaskCreate(&buttons_task, "buttons_task", 4098, NULL, 5, NULL);
+    xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
     // xTaskCreate(&poll_mtu_task_queue_task, "poll_mtu_task_queue_task", 4098, NULL, 5, NULL);
 }
 
@@ -175,23 +176,32 @@ void alarm_task(void *pvParameter){
     vTaskDelete(NULL);
 }
 
-void buttons_task(void *pvParameter){
+void morse_password_input_task(void *pvParameter){
     button_event_t ev;
     QueueHandle_t button_events = button_init(PIN_BIT(BUTTON_PIN));
-
+    char morse_password[MAX_PASSWORD_LENGTH] = {'\0'};
+    uint8_t curr_morse_char = 0;
+    uint8_t curr_morse_char_len = 0;
+    char was_held_flag = false;
     
-
     while (true) {
-        vTaskDelay(100/portTICK_PERIOD_MS);
         if (xQueueReceive(button_events, &ev, 1000/portTICK_PERIOD_MS)) {
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_DOWN)) {
-                ESP_LOGI(NAV_TAG,"Got click");
+            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
+                was_held_flag = true;
             }
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_DOWN)) {
-                ESP_LOGI(NAV_TAG,"Got long click");
+            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_UP)) {
+                if(was_held_flag){
+                    ESP_LOGI(NAV_TAG,"Got long");
+                }else{
+                    ESP_LOGI(NAV_TAG,"Got short");
+                }
+                curr_morse_char |= was_held_flag << curr_morse_char_len;
+                curr_morse_char_len++;
+                was_held_flag = false;
+                ESP_LOGI(NAV_TAG,"Curr morse char is %c", bin_morse_2_char(curr_morse_char,curr_morse_char_len));        
+                ESP_LOGI(NAV_TAG,"curr_morse_char = %d len = %d", curr_morse_char,curr_morse_char_len);        
             }
         }
     }
     vTaskDelete(NULL);
 }
-
