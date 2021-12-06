@@ -43,15 +43,14 @@
 #include "komoot_ble_client.h"
 #include "display.h"
 #include "mpu6050.h"
-
-
+#include "button.h"
 
 #define NAV_TAG "NAVIGATION_DISPLAY"
 #define LV_TICK_PERIOD_MS 1
+#define BUTTON_PIN GPIO_NUM_35
 
 uint32_t curr_passkey=123456;
 struct nav_data_t curr_nav_data = {0,0,{0}};
-
 TaskHandle_t display_nav_task_handle = NULL;
 
 #define LV_TICK_PERIOD_MS 1
@@ -61,6 +60,7 @@ static void lv_tick_task(void *arg);
 void  display_task_new(void *pvParameter);
 void poll_mtu_task_queue_task(void *pvParameter);
 void alarm_task(void *pvParameter);
+void buttons_task(void *pvParameter);
 
 
 
@@ -74,8 +74,9 @@ void app_main(){
 
     // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
-    xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
+    // xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     // xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
+    xTaskCreate(&buttons_task, "buttons_task", 4098, NULL, 5, NULL);
     // xTaskCreate(&poll_mtu_task_queue_task, "poll_mtu_task_queue_task", 4098, NULL, 5, NULL);
 }
 
@@ -171,6 +172,26 @@ void alarm_task(void *pvParameter){
 		ESP_LOGI(NAV_TAG, "x: %d, y: %d, z: %d", accel_val.x, accel_val.y, accel_val.z);
     }
 
+    vTaskDelete(NULL);
+}
+
+void buttons_task(void *pvParameter){
+    button_event_t ev;
+    QueueHandle_t button_events = button_init(PIN_BIT(BUTTON_PIN));
+
+    
+
+    while (true) {
+        vTaskDelay(100/portTICK_PERIOD_MS);
+        if (xQueueReceive(button_events, &ev, 1000/portTICK_PERIOD_MS)) {
+            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_DOWN)) {
+                ESP_LOGI(NAV_TAG,"Got click");
+            }
+            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_DOWN)) {
+                ESP_LOGI(NAV_TAG,"Got long click");
+            }
+        }
+    }
     vTaskDelete(NULL);
 }
 

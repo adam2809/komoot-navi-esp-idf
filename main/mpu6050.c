@@ -39,7 +39,7 @@ void IRAM_ATTR mpu_isr_handler(void* arg){
 }
 
 void init_mpu_interrupt(){
-        gpio_config_t io_conf = {};
+    gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_NEGEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = 1ULL << MPU6050_INTERRUPT_INPUT_PIN;
