@@ -49,10 +49,12 @@
 #define NAV_TAG "NAVIGATION_DISPLAY"
 #define LV_TICK_PERIOD_MS 1
 #define BUTTON_PIN GPIO_NUM_35
+#define BUTTONS_BITMASK PIN_BIT(BUTTON_PIN)
 
 uint32_t curr_passkey=123456;
 struct nav_data_t curr_nav_data = {0,0,{0}};
 TaskHandle_t display_nav_task_handle = NULL;
+QueueHandle_t button_events = NULL;
 
 #define LV_TICK_PERIOD_MS 1
 
@@ -60,8 +62,9 @@ void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
 void  display_task_new(void *pvParameter);
 void poll_mtu_task_queue_task(void *pvParameter);
-void alarm_task(void *pvParameter);
+void alarm_enable_task(void *pvParameter);
 void morse_password_input_task(void *pvParameter);
+void go_to_deep_sleep();
 
 
 
@@ -76,8 +79,8 @@ void app_main(){
     // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
     
     // xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
-    // xTaskCreate(&alarm_task, "alarm_task", 4098, NULL, 5, NULL);
-    xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
+    xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
+    // xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
     // xTaskCreate(&poll_mtu_task_queue_task, "poll_mtu_task_queue_task", 4098, NULL, 5, NULL);
 }
 
@@ -151,40 +154,49 @@ static void lv_tick_task(void *arg) {
     lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
-void go_to_deep_sleep(){
-    if(rtc_gpio_pullup_en(MPU6050_INTERRUPT_INPUT_PIN)){
-        ESP_LOGE(NAV_TAG,"Could not pull up gpio %d",MPU6050_INTERRUPT_INPUT_PIN);
+void alarm_enable_task(void *pvParameter){    
+    if(button_events == NULL){
+        button_events = button_init(BUTTONS_BITMASK);
     }
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
-    esp_deep_sleep_start();
-}
 
-void alarm_task(void *pvParameter){
-    vTaskDelay(100/portTICK_PERIOD_MS);
-    
-    configure_mpu(10);
-
-    uint8_t read_data[6];
-    val_3d accel_val;
+    button_event_t ev;
+    bool was_held_flag = false;
     while(1){
-        vTaskDelay(100/portTICK_PERIOD_MS);
-
-        read_3d_reg_value(&accel_val,MPU6050_ACCEL_XOUT_H,read_data);
-		ESP_LOGI(NAV_TAG, "x: %d, y: %d, z: %d", accel_val.x, accel_val.y, accel_val.z);
+        if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
+            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
+                was_held_flag = true;
+            }
+            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_UP)) {
+                if(was_held_flag){
+                    go_to_deep_sleep();
+                }
+            }
+        }
     }
 
     vTaskDelete(NULL);
 }
 
+void go_to_deep_sleep(){
+    if(rtc_gpio_pullup_en(MPU6050_INTERRUPT_INPUT_PIN)){
+        ESP_LOGE(NAV_TAG,"Could not pull up gpio %d",MPU6050_INTERRUPT_INPUT_PIN);
+    }
+    ESP_LOGI(NAV_TAG,"Going to deep sleep");
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
+    esp_deep_sleep_start();
+}
+
 void morse_password_input_task(void *pvParameter){
+    if(button_events == NULL){
+        button_events = button_init(BUTTONS_BITMASK);
+    }
     button_event_t ev;
-    QueueHandle_t button_events = button_init(PIN_BIT(BUTTON_PIN));
     char morse_password[MAX_PASSWORD_LENGTH] = {'\0'};
     uint8_t morse_password_len = 0;
     uint8_t morse_char = 0;
     uint8_t morse_char_len = 0;
     int64_t last_char_input_time = 0;
-    char was_held_flag = false;
+    bool was_held_flag = false;
     
     while (true) {
         if (esp_timer_get_time() / 1000ULL - last_char_input_time > TIME_BETWEEN_LETTERS && morse_char_len != 0){
