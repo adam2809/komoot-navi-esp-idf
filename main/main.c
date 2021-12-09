@@ -61,11 +61,11 @@ QueueHandle_t button_events = NULL;
 void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
 void  display_task_new(void *pvParameter);
-void poll_mtu_task_queue_task(void *pvParameter);
+void poll_mtu_event_queue_task(void *pvParameter);
 void alarm_enable_task(void *pvParameter);
 void morse_password_input_task(void *pvParameter);
 void go_to_deep_sleep();
-void log_wake_info();
+void react_to_wakeup_reason();
 
 
 void app_main(){
@@ -75,14 +75,40 @@ void app_main(){
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK( ret );
-
+    react_to_wakeup_reason();
     // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
 
     // xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
     // xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
-    // xTaskCreate(&poll_mtu_task_queue_task, "poll_mtu_task_queue_task", 4098, NULL, 5, NULL);
+    // xTaskCreate(&poll_mtu_event_queue_task, "poll_mtu_event_queue_task", 4098, NULL, 5, NULL);
 }
+
+void react_to_wakeup_reason(){
+    switch (esp_sleep_get_wakeup_cause()) {
+        case ESP_SLEEP_WAKEUP_EXT1: {
+            uint64_t wakeup_pin_mask = esp_sleep_get_ext1_wakeup_status();
+            if (wakeup_pin_mask != 0) {
+                int pin = __builtin_ffsll(wakeup_pin_mask) - 1;
+                ESP_LOGI(GATTC_TAG,"Wake up from GPIO %d", pin);
+            } else {
+                ESP_LOGI(GATTC_TAG,"Wake up from GPIO");
+            }
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_EXT0: {
+            ESP_LOGI(GATTC_TAG,"Wake up from EXT0");
+            break;
+        }
+        case ESP_SLEEP_WAKEUP_UNDEFINED:{
+            ESP_LOGI(GATTC_TAG,"Undefined wakeup reason");
+            break;
+        }
+        default:
+            ESP_LOGI(GATTC_TAG,"Not a deep sleep reset");
+    }
+}
+
 
 
 SemaphoreHandle_t xGuiSemaphore;
@@ -137,7 +163,7 @@ void  display_task_new(void *pvParameter){
     vTaskDelete(NULL);
 }
 
-void poll_mtu_task_queue_task(void *pvParameter){    
+void poll_mtu_event_queue_task(void *pvParameter){    
     init_mpu_interrupt();
 
     gpio_num_t interrupt_gpio = MPU6050_INTERRUPT_INPUT_PIN;
