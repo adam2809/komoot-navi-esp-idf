@@ -183,7 +183,7 @@ static void lv_tick_task(void *arg) {
 
 void alarm_enable_task(void *pvParameter){    
     if(button_events == NULL){
-        button_events = button_init(BUTTONS_BITMASK);
+        button_events = button_init(BUTTONS_BITMASK,false);
     }
 
     configure_mpu(MOTION_DETECTION_SENSITIVITY);
@@ -194,12 +194,7 @@ void alarm_enable_task(void *pvParameter){
     while(1){
         if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
             if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
-                was_held_flag = true;
-            }
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_UP)) {
-                if(was_held_flag){
                     go_to_deep_sleep();
-                }
             }
         }
     }
@@ -216,7 +211,7 @@ void go_to_deep_sleep(){
 
 void morse_password_input_task(void *pvParameter){
     if(button_events == NULL){
-        button_events = button_init(BUTTONS_BITMASK);
+        button_events = button_init(BUTTONS_BITMASK,false);
     }
     button_event_t ev;
     char morse_password[MAX_PASSWORD_LENGTH] = {'\0'};
