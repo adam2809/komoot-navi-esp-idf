@@ -3,7 +3,7 @@
 #include "i2c_manager.h"
 
 #define SIGNAL_PATH_RESET  0x68
-#define I2C_SLV0_ADDR      0x37
+#define INT_PIN_CFG      0x37
 #define ACCEL_CONFIG       0x1C
 #define MOT_THR            0x1F  // Motion detection threshold bits [7:0]
 #define MOT_DUR            0x20  // This seems wrong // Duration counter threshold for motion interrupt generation, 1 kHz rate, LSB = 1 ms

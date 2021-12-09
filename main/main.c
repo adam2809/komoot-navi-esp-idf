@@ -163,7 +163,8 @@ void  display_task_new(void *pvParameter){
     vTaskDelete(NULL);
 }
 
-void poll_mtu_event_queue_task(void *pvParameter){    
+void poll_mtu_event_queue_task(void *pvParameter){  
+    configure_mpu(MOTION_DETECTION_SENSITIVITY);  
     init_mpu_interrupt();
 
     gpio_num_t interrupt_gpio = MPU6050_INTERRUPT_INPUT_PIN;
@@ -207,11 +208,9 @@ void alarm_enable_task(void *pvParameter){
 }
 
 void go_to_deep_sleep(){
-    if(rtc_gpio_pullup_en(MPU6050_INTERRUPT_INPUT_PIN)){
-        ESP_LOGE(NAV_TAG,"Could not pull up gpio %d",MPU6050_INTERRUPT_INPUT_PIN);
-    }
+    rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);
     ESP_LOGI(NAV_TAG,"Going to deep sleep");
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_13,0);
+    esp_sleep_enable_ext1_wakeup(PIN_BIT(MPU6050_INTERRUPT_INPUT_PIN),ESP_EXT1_WAKEUP_ANY_HIGH);
     esp_deep_sleep_start();
 }
 
