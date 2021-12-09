@@ -65,7 +65,7 @@ void poll_mtu_task_queue_task(void *pvParameter);
 void alarm_enable_task(void *pvParameter);
 void morse_password_input_task(void *pvParameter);
 void go_to_deep_sleep();
-
+void log_wake_info();
 
 
 void app_main(){
@@ -77,7 +77,7 @@ void app_main(){
     ESP_ERROR_CHECK( ret );
 
     // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
-    
+
     // xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
     // xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
@@ -158,6 +158,9 @@ void alarm_enable_task(void *pvParameter){
     if(button_events == NULL){
         button_events = button_init(BUTTONS_BITMASK);
     }
+
+    configure_mpu(MOTION_DETECTION_SENSITIVITY);
+    init_mpu_interrupt();
 
     button_event_t ev;
     bool was_held_flag = false;
