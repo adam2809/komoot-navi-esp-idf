@@ -75,12 +75,13 @@ void app_main(){
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK( ret );
+    button_events = button_init(BUTTONS_BITMASK,false);
+
     react_to_wakeup_reason();
     // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
 
     // xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
-    // xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
     // xTaskCreate(&poll_mtu_event_queue_task, "poll_mtu_event_queue_task", 4098, NULL, 5, NULL);
 }
 
@@ -91,8 +92,12 @@ void react_to_wakeup_reason(){
             if (wakeup_pin_mask != 0) {
                 int pin = __builtin_ffsll(wakeup_pin_mask) - 1;
                 ESP_LOGI(GATTC_TAG,"Wake up from GPIO %d", pin);
+                if(pin != BUTTON_PIN){
+                    ESP_LOGI(GATTC_TAG,"Turning on alarm");
+                }
+                xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
             } else {
-                ESP_LOGI(GATTC_TAG,"Wake up from GPIO");
+                ESP_LOGW(GATTC_TAG,"Could not get wakeup pin number");
             }
             break;
         }
@@ -182,18 +187,13 @@ static void lv_tick_task(void *arg) {
 }
 
 void alarm_enable_task(void *pvParameter){    
-    if(button_events == NULL){
-        button_events = button_init(BUTTONS_BITMASK,false);
-    }
-
     configure_mpu(MOTION_DETECTION_SENSITIVITY);
     init_mpu_interrupt();
 
     button_event_t ev;
-    bool was_held_flag = false;
     while(1){
         if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
+            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_UP)) {
                     go_to_deep_sleep();
             }
         }
@@ -205,14 +205,11 @@ void alarm_enable_task(void *pvParameter){
 void go_to_deep_sleep(){
     rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);
     ESP_LOGI(NAV_TAG,"Going to deep sleep");
-    esp_sleep_enable_ext1_wakeup(PIN_BIT(MPU6050_INTERRUPT_INPUT_PIN),ESP_EXT1_WAKEUP_ANY_HIGH);
+    esp_sleep_enable_ext1_wakeup(PIN_BIT(MPU6050_INTERRUPT_INPUT_PIN)|PIN_BIT(BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH);
     esp_deep_sleep_start();
 }
 
 void morse_password_input_task(void *pvParameter){
-    if(button_events == NULL){
-        button_events = button_init(BUTTONS_BITMASK,false);
-    }
     button_event_t ev;
     char morse_password[MAX_PASSWORD_LENGTH] = {'\0'};
     uint8_t morse_password_len = 0;
