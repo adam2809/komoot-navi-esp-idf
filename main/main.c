@@ -61,7 +61,7 @@ QueueHandle_t button_events = NULL;
 
 void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
-void  display_task_new(void *pvParameter);
+void  display_task(void *pvParameter);
 void poll_mtu_event_queue_task(void *pvParameter);
 void alarm_enable_task(void *pvParameter);
 void morse_password_input_task(void *pvParameter);
@@ -81,7 +81,7 @@ void app_main(){
     react_to_wakeup_reason();
     // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
 
-    // xTaskCreatePinnedToCore(display_task_new, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
+    xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
     // xTaskCreate(&poll_mtu_event_queue_task, "poll_mtu_event_queue_task", 4098, NULL, 5, NULL);
 }
 
@@ -119,7 +119,7 @@ void react_to_wakeup_reason(){
 
 SemaphoreHandle_t xGuiSemaphore;
 
-void  display_task_new(void *pvParameter){
+void display_task(void *pvParameter){
     (void) pvParameter;
     xGuiSemaphore = xSemaphoreCreateMutex();
     
@@ -147,17 +147,27 @@ void  display_task_new(void *pvParameter){
             portMAX_DELAY
         );
         ESP_LOGI(GATTC_TAG,"Display task got notification with value %d",ulNotifiedValue);
+        
+        switch(ulNotifiedValue){
+            case NOTIFY_VALUE_NAVIGATION:{
+                if(curr_nav_data.direction!=13&&curr_nav_data.direction!=14&&curr_nav_data.direction!=31){
+                    display_dir_symbol(curr_nav_data.direction);
+                }
+                
+                display_meters(curr_nav_data.distance);
+                break;
+            }            
+            case NOTIFY_VALUE_PASSKEY:{
 
-        if(ulNotifiedValue == NOTIFY_VALUE_NAVIGATION){
-            if(curr_nav_data.direction!=13&&curr_nav_data.direction!=14&&curr_nav_data.direction!=31){
-                display_dir_symbol(curr_nav_data.direction);
+                display_passkey(curr_passkey);
+                break;
+            }            
+            case NOTIFY_VALUE_MORSE:{
+
+                break;
             }
-            
-            display_meters(curr_nav_data.distance);
-        }else if(ulNotifiedValue == NOTIFY_VALUE_PASSKEY){
-            display_passkey(curr_passkey);
         }
-
+        // vTaskDelay(pdMS_TO_TICKS(10));
         if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
             ESP_LOGD(NAV_TAG,"Calling task handler");
             lv_task_handler();
