@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #define MAX_PASSWORD_LENGTH 10
+#define MAX_BITS_IN_LETTER 5
 #define TIME_BETWEEN_LETTERS 2000ULL
 #define TIME_BETWEEN_WORDS 5000ULL
 

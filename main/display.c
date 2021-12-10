@@ -119,5 +119,14 @@ void display_morse(uint8_t bin_morse,uint8_t len,char* password){
 
     lv_scr_load(morse_input_scr);
 
+    char bit_str_rep[MAX_BITS_IN_LETTER+2] = {'\0'};
+    bit_str_rep[0] = bin_morse_2_char(bin_morse,len);
+    for (int i = 0; i < len; i++){
+        bool bit = (bin_morse >> i) % 2;
+        bit_str_rep[i+1] = bit ? '_' : '.';
+    }
+    
+    
     lv_label_set_text(morse_password_label,password);
+    lv_label_set_text(morse_bin_label,bit_str_rep);
 }

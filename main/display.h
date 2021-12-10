@@ -9,6 +9,7 @@
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include "i2c_manager.h"
+#include "morse.h"
 
 void init_lvgl_display(lv_color_t* buf);
 void init_lvgl_objs();

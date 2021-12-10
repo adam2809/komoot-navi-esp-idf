@@ -238,10 +238,33 @@ void morse_password_input_task(void *pvParameter){
         if(!memcmp(morse_password,password,sizeof(char)*password_len)){
             ESP_LOGI(NAV_TAG,"Password correct");
             xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
+            
+            strcpy(morse_password,"ok\0");
+            morse_char_len = 0;
+            morse_char = 0;
+            xTaskNotify(
+                display_nav_task_handle,
+                NOTIFY_VALUE_MORSE,
+                eSetValueWithOverwrite
+            );
+            vTaskDelay(pdMS_TO_TICKS(500));
+
             vTaskDelete(NULL);
+        }else{
+            ESP_LOGI(NAV_TAG,"Password wrong");
+
+            strcpy(morse_password,"wrong\0");
+            morse_char_len = 0;
+            morse_char = 0;
+            xTaskNotify(
+                display_nav_task_handle,
+                NOTIFY_VALUE_MORSE,
+                eSetValueWithOverwrite
+            );
+            
+            vTaskDelay(pdMS_TO_TICKS(500));
         }
     }
-    ESP_LOGI(NAV_TAG,"Password wrong");
     ESP_LOGI(GATTC_TAG,"Turning on alarm");
     vTaskDelete(NULL);
 }
@@ -292,6 +315,11 @@ void read_morse_word(){
                 }
                 morse_char |= was_held_flag << morse_char_len;
                 morse_char_len++;
+                xTaskNotify(
+                    display_nav_task_handle,
+                    NOTIFY_VALUE_MORSE,
+                    eSetValueWithOverwrite
+                );
                 was_held_flag = false;
                 last_char_input_time = esp_timer_get_time() / 1000ULL;
                 ESP_LOGI(NAV_TAG,"Morse char is %c", bin_morse_2_char(morse_char,morse_char_len));
