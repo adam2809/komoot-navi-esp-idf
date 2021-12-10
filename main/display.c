@@ -62,9 +62,13 @@ void init_lvgl_objs(){
     dir_symbol = lv_img_create(nav_scr,NULL);
 
     morse_bin_label = lv_label_create(morse_input_scr,NULL);
-    lv_obj_align(morse_bin_label, NULL, LV_ALIGN_CENTER,0,0);
     morse_password_label = lv_label_create(morse_input_scr,NULL);
+
+    lv_obj_align(morse_bin_label, NULL, LV_ALIGN_CENTER,0,0);
     lv_obj_align(morse_password_label, NULL, LV_ALIGN_IN_BOTTOM_MID,0,0);
+
+    lv_label_set_text(morse_bin_label,"");
+    lv_label_set_text(morse_password_label,"");
 
     lv_scr_load(lv_obj_create(NULL, NULL));
 }
@@ -110,6 +114,10 @@ void display_meters(uint32_t meters){
     }
 }
 
-void display_morse(uint8_t bin_morse,uint8_t len,char* password,uint8_t password_len){
+void display_morse(uint8_t bin_morse,uint8_t len,char* password){
+    ESP_LOGI(DISPLAY_TAG,"Displaing morse");
 
+    lv_scr_load(morse_input_scr);
+
+    lv_label_set_text(morse_password_label,password);
 }
