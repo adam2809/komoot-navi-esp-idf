@@ -32,7 +32,8 @@ struct gattc_profile_inst {
 
 enum display_task_notify_value_t{
     NOTIFY_VALUE_NAVIGATION,
-    NOTIFY_VALUE_PASSKEY
+    NOTIFY_VALUE_PASSKEY,
+    NOTIFY_VALUE_MORSE
 };
 
 

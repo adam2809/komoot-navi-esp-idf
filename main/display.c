@@ -2,9 +2,12 @@
 
 lv_obj_t* nav_scr;
 lv_obj_t* passkey_scr;
+lv_obj_t* morse_input_scr; 
 
 lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
+lv_obj_t * morse_bin_label = NULL;
+lv_obj_t * morse_password_label = NULL;
 
 lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * dir_symbol = NULL;
@@ -40,6 +43,7 @@ void init_lvgl_display(lv_color_t* buf) {
 void init_lvgl_objs(){
     passkey_scr  = lv_obj_create(NULL, NULL);
     nav_scr  = lv_obj_create(NULL, NULL);
+    morse_input_scr = lv_obj_create(NULL, NULL);
 
     for(int i = 0;i < DIGITS_IN_ROW_COUNT;i++){
         passkey_digits_row_top[i] = lv_img_create(passkey_scr,NULL);
@@ -57,6 +61,16 @@ void init_lvgl_objs(){
 
     dir_symbol = lv_img_create(nav_scr,NULL);
 
+    morse_bin_label = lv_label_create(morse_input_scr,NULL);
+    morse_password_label = lv_label_create(morse_input_scr,NULL);
+
+    lv_obj_align(morse_bin_label, NULL, LV_ALIGN_CENTER,0,0);
+    lv_obj_align(morse_password_label, NULL, LV_ALIGN_IN_BOTTOM_MID,0,0);
+
+    lv_label_set_text(morse_bin_label,"");
+    lv_label_set_text(morse_password_label,"");
+
+    lv_scr_load(lv_obj_create(NULL, NULL));
 }
 
 void display_number_row(uint32_t row_content,lv_obj_t* row[]){
@@ -98,4 +112,21 @@ void display_meters(uint32_t meters){
         lv_img_set_src(meters_digits[1],digits[1]);
         lv_img_set_src(meters_digits[2],&km);
     }
+}
+
+void display_morse(uint8_t bin_morse,uint8_t len,char* password){
+    ESP_LOGI(DISPLAY_TAG,"Displaing morse");
+
+    lv_scr_load(morse_input_scr);
+
+    char bit_str_rep[MAX_BITS_IN_LETTER+2] = {'\0'};
+    bit_str_rep[0] = bin_morse_2_char(bin_morse,len);
+    for (int i = 0; i < len; i++){
+        bool bit = (bin_morse >> i) % 2;
+        bit_str_rep[i+1] = bit ? '_' : '.';
+    }
+    
+    
+    lv_label_set_text(morse_password_label,password);
+    lv_label_set_text(morse_bin_label,bit_str_rep);
 }

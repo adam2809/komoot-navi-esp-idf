@@ -31,6 +31,10 @@
         "sstream": "c",
         "streambuf": "c",
         "mpu6050.h": "c",
-        "rtc_io.h": "c"
+        "rtc_io.h": "c",
+        "button.h": "c",
+        "morse.h": "c",
+        "esp_gap_ble_api.h": "c",
+        "misc.h": "c"
     }
 }
