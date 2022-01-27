@@ -54,7 +54,7 @@ void morse_password_input_task(void *pvParameter){
 
     QueueHandle_t buttons_events = ((morse_input_params_t*)pvParameter)->buttons_events;
     TaskHandle_t display_task_handle = ((morse_input_params_t*)pvParameter)->display_task_handle;
-
+    
     for(int i=0;i<MAX_PASSWORD_TRIES;i++){
         memset(morse_password,'\0',sizeof(char)*MAX_PASSWORD_LENGTH);
         read_morse_word(buttons_events,display_task_handle);

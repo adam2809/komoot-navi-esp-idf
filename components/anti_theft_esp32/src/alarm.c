@@ -8,11 +8,13 @@ void alarm_enable_task(void *pvParameter){
 
     button_event_t ev;
     while(1){
-        if (xQueueReceive((QueueHandle_t) pvParameter, &ev, 100/portTICK_PERIOD_MS)) {
+        QueueHandle_t queue = (QueueHandle_t) pvParameter;
+        if (queue != NULL && xQueueReceive(queue, &ev, 100/portTICK_PERIOD_MS)) {
             if ((ev.pin == CONFIG_BUTTON_PIN) && (ev.event == BUTTON_UP)) {
                 go_to_deep_sleep();
             }
         }
+        vTaskDelay(10 / portTICK_RATE_MS);
     }
 
     vTaskDelete(NULL);

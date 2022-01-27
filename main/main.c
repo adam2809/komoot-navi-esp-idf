@@ -50,8 +50,10 @@
 
 uint32_t curr_passkey=123456;
 struct nav_data_t curr_nav_data = {0,0,{0}};
-TaskHandle_t display_nav_task_handle = NULL;
+TaskHandle_t display_task_handle = NULL;
 QueueHandle_t button_events = NULL;
+
+morse_input_params_t morse_input_params; 
 
 void poll_mtu_event_queue_task(void *pvParameter);
 void go_to_deep_sleep();
@@ -66,12 +68,10 @@ void app_main(){
     ESP_ERROR_CHECK( ret );
     button_events = button_init(BUTTONS_BITMASK,false);
 
-    xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
+    xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_task_handle, 1);
 
     react_to_wakeup_reason();
-    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
-
-    // xTaskCreate(&poll_mtu_event_queue_task, "poll_mtu_event_queue_task", 4098, NULL, 5, NULL);
+    init_komoot_ble_client(&display_task_handle);
 }
 
 void react_to_wakeup_reason(){
@@ -84,7 +84,9 @@ void react_to_wakeup_reason(){
                 if(pin != CONFIG_BUTTON_PIN){
                     ESP_LOGI(GATTC_TAG,"Turning on alarm");
                 }
-                xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) button_events, 5, NULL);
+                morse_input_params.buttons_events = button_events;
+                morse_input_params.display_task_handle = display_task_handle;
+                xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
             } else {
                 ESP_LOGW(GATTC_TAG,"Could not get wakeup pin number");
             }
@@ -95,7 +97,7 @@ void react_to_wakeup_reason(){
             break;
         }
         case ESP_SLEEP_WAKEUP_UNDEFINED:{
-            xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
+            xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, (void*) button_events, 5, NULL);
             ESP_LOGI(GATTC_TAG,"Undefined wakeup reason");
             break;
         }
