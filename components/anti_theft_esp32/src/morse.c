@@ -127,10 +127,10 @@ void read_morse_word(QueueHandle_t button_events,TaskHandle_t display_task_handl
         }
         
         if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
+            if ((ev.pin == CONFIG_BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
                 was_held_flag = true;
             }
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_UP)) {
+            if ((ev.pin == CONFIG_BUTTON_PIN) && (ev.event == BUTTON_UP)) {
                 if(was_held_flag){
                     ESP_LOGI(TAG,"Got long");
                 }else{

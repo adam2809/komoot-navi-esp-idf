@@ -45,8 +45,7 @@
 #include "morse.h"
 
 #define NAV_TAG "NAVIGATION_DISPLAY"
-#define BUTTON_PIN GPIO_NUM_35
-#define BUTTONS_BITMASK PIN_BIT(BUTTON_PIN)
+#define BUTTONS_BITMASK PIN_BIT(CONFIG_BUTTON_PIN)
 #define LV_TICK_PERIOD_MS 1
 
 uint32_t curr_passkey=123456;
@@ -82,7 +81,7 @@ void react_to_wakeup_reason(){
             if (wakeup_pin_mask != 0) {
                 int pin = __builtin_ffsll(wakeup_pin_mask) - 1;
                 ESP_LOGI(GATTC_TAG,"Wake up from GPIO %d", pin);
-                if(pin != BUTTON_PIN){
+                if(pin != CONFIG_BUTTON_PIN){
                     ESP_LOGI(GATTC_TAG,"Turning on alarm");
                 }
                 xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) button_events, 5, NULL);
