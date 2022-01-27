@@ -12,6 +12,7 @@
 #include "esp_log.h"
 
 #include "button.h"
+#include "alarm.h"
 
 #define MAX_PASSWORD_LENGTH 10
 #define MAX_BITS_IN_LETTER 5
@@ -22,17 +23,11 @@
 #define TAG "MORSE"
 
 typedef struct{
-    int16_t x;
-    int16_t y;
-    int16_t z;
-} val_3d;
-
-typedef struct{
     QueueHandle_t buttons_events;
     TaskHandle_t display_task_handle;
 } morse_input_params_t;
 
 char bin_morse_2_char(uint8_t bin_morse,uint8_t len);
 void morse_password_input_task(void *pvParameter);
-void read_morse_word(QueueHandle_t button_events);
+void read_morse_word(QueueHandle_t button_events,TaskHandle_t display_task_handle);
 #endif

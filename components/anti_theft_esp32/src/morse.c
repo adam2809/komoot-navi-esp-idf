@@ -58,7 +58,7 @@ void morse_password_input_task(void *pvParameter){
         read_morse_word(buttons_events,display_task_handle);
         if(!memcmp(morse_password,password,sizeof(char)*password_len)){
             ESP_LOGI(TAG,"Password correct");
-            xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
+            xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, buttons_events, 5, NULL);
             
             strcpy(morse_password,"ok\0");
             morse_char_len = 0;

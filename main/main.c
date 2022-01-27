@@ -200,22 +200,6 @@ static void lv_tick_task(void *arg) {
     lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
-void alarm_enable_task(void *pvParameter){    
-    configure_mpu(MOTION_DETECTION_SENSITIVITY);
-    init_mpu_interrupt();
-
-    button_event_t ev;
-    while(1){
-        if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_UP)) {
-                go_to_deep_sleep();
-            }
-        }
-    }
-
-    vTaskDelete(NULL);
-}
-
 void go_to_deep_sleep(){
     rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);
     ESP_LOGI(NAV_TAG,"Going to deep sleep");
