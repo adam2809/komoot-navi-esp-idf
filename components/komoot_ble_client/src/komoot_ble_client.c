@@ -1,7 +1,7 @@
 #include "komoot_ble_client.h"
 
-uint32_t passkey_pointer;
-struct nav_data_t nav_data_pointer;
+uint32_t passkey;
+struct nav_data_t nav_data;
 TaskHandle_t* display_nav_task_handle_pointer;
 
 static esp_bt_uuid_t remote_filter_service_uuid = {
@@ -162,8 +162,8 @@ void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
     case ESP_GAP_BLE_PASSKEY_NOTIF_EVT:  ///the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
         ///show the passkey number to the user to input it in the peer device.
         ESP_LOGI(GATTC_TAG, "ESP_GAP_BLE_PASSKEY_NOTIF_EVT");
-        *passkey_pointer = param->ble_security.key_notif.passkey;
-        ESP_LOGI(GATTC_TAG, "The passkey Notify number:%06d", *passkey_pointer);
+        passkey = param->ble_security.key_notif.passkey;
+        ESP_LOGI(GATTC_TAG, "The passkey Notify number:%06d", passkey);
 
         if (*display_nav_task_handle_pointer != NULL){
             xTaskNotify(
@@ -464,9 +464,9 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         }
         esp_log_buffer_hex(GATTC_TAG, p_data->notify.value, p_data->notify.value_len);
 
-        resolve_nav_data(p_data->notify.value,nav_data_pointer);
+        resolve_nav_data(p_data->notify.value,nav_data);
         ESP_LOGI(GATTC_TAG, "resolved:");
-        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",nav_data_pointer.direction,nav_data_pointer.distance,nav_data_pointer.street);
+        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",nav_data.direction,nav_data.distance,nav_data.street);
         if (*display_nav_task_handle_pointer != NULL){
             xTaskNotify(
                 *display_nav_task_handle_pointer,
@@ -606,12 +606,4 @@ uint8_t* resolve_service_from_adv_data(uint8_t* adv_data,uint8_t adv_data_length
     }
     
     return &adv_data[5];
-}
-
-
-uint32_t get_passkey(){
-    return passkey_pointer;
-}
-struct nav_data_t* get_nav_data(){
-    return &nav_data_pointer;
 }

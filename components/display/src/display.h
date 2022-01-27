@@ -7,6 +7,7 @@
 #include "esp_log.h"
 #include "i2c_manager.h"
 #include "morse.h"
+#include "komoot_ble_client.h"
 
 #define LV_TICK_PERIOD_MS 1
 

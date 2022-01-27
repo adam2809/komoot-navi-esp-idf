@@ -48,5 +48,5 @@ char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req);
 const char *esp_key_type_to_str(esp_ble_key_type_t key_type);
 uint8_t* resolve_service_from_adv_data(uint8_t* adv_data,uint8_t adv_data_length);
 
-uint32_t get_passkey();
-struct nav_data_t* get_nav_data();
+uint32_t passkey;
+struct nav_data_t nav_data;

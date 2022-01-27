@@ -168,18 +168,17 @@ void display_task(void *pvParameter){
             portMAX_DELAY
         );
         ESP_LOGI(TAG,"Display task got notification with value %d",ulNotifiedValue);
-        
         switch(ulNotifiedValue){
             case NOTIFY_VALUE_NAVIGATION:{
-                if(curr_nav_data.direction!=13&&curr_nav_data.direction!=14&&curr_nav_data.direction!=31){
-                    display_dir_symbol(curr_nav_data.direction);
+                if(nav_data.direction!=13&&nav_data.direction!=14&&nav_data.direction!=31){
+                    display_dir_symbol(nav_data.direction);
                 }
                 
-                display_meters(curr_nav_data.distance);
+                display_meters(nav_data.distance);
                 break;
             }            
             case NOTIFY_VALUE_PASSKEY:{
-                display_passkey(curr_passkey);
+                display_passkey(passkey);
                 break;
             }            
             case NOTIFY_VALUE_MORSE:{
