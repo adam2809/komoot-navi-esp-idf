@@ -1,5 +1,5 @@
-#ifndef _KOMOOT_BLE_CLIENT_H
-#define _KOMOOT_BLE_CLIENT_H
+#pragma once
+
 #include "esp_bt.h"
 #include "esp_gap_ble_api.h"
 #include "esp_gattc_api.h"
@@ -51,4 +51,3 @@ void resolve_nav_data(uint8_t* data,struct nav_data_t* target);
 char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req);
 const char *esp_key_type_to_str(esp_ble_key_type_t key_type);
 uint8_t* resolve_service_from_adv_data(uint8_t* adv_data,uint8_t adv_data_length);
-#endif

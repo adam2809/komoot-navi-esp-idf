@@ -1,6 +1,4 @@
-#ifndef _DIGIT_IMGS_H
-#define _DIGIT_IMGS_H
-
+#pragma once
 
 #define DIGITS_IN_ROW_COUNT 3
 
@@ -22,4 +20,3 @@
 #include "lvgl_helpers.h"
 
 const lv_img_dsc_t* digits[10];
-#endif

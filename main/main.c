@@ -59,13 +59,9 @@ QueueHandle_t button_events = NULL;
 
 void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
-void  display_task(void *pvParameter);
 void poll_mtu_event_queue_task(void *pvParameter);
-void alarm_enable_task(void *pvParameter);
-void morse_password_input_task(void *pvParameter);
 void go_to_deep_sleep();
 void react_to_wakeup_reason();
-void read_morse_word(QueueHandle_t button_events);
 
 void app_main(){
     esp_err_t ret = nvs_flash_init();

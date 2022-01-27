@@ -1,5 +1,4 @@
-#ifndef _DISPLAY_H
-#define _DISPLAY_H
+#pragma once
 
 #define DISPLAY_TAG "DISPLAY"
 
@@ -17,5 +16,3 @@ void display_passkey(uint32_t passkey);
 void display_dir_symbol(uint8_t symbol);
 void display_meters(uint32_t meters);
 void display_morse(uint8_t bin_morse,uint8_t len,char* password);
-
-#endif

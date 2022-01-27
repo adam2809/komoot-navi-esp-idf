@@ -1,5 +1,5 @@
-#ifndef _DIR_SYMBOLS_IMGS
-#define _DIR_SYMBOLS_IMGS
+#pragma once
+
 #include "lvgl_helpers.h"
 #include <stdio.h>
 const lv_img_dsc_t ic_nav_arrow_finish;
@@ -34,4 +34,3 @@ const lv_img_dsc_t ic_nav_arrow_start;
 const lv_img_dsc_t ic_nav_roundabout_cw1_2;
 const lv_img_dsc_t not_defined;
 const lv_img_dsc_t* dir_symbols_imgs[];
-#endif

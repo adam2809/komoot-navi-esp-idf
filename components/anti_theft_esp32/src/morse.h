@@ -1,5 +1,4 @@
-#ifndef _MORSE_H
-#define _MORSE_H
+#pragma once
 
 #include <stdio.h>
 #include <stdint.h>
@@ -30,4 +29,3 @@ typedef struct{
 char bin_morse_2_char(uint8_t bin_morse,uint8_t len);
 void morse_password_input_task(void *pvParameter);
 void read_morse_word(QueueHandle_t button_events,TaskHandle_t display_task_handle);
-#endif
