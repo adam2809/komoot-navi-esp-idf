@@ -50,17 +50,12 @@
 #define LV_TICK_PERIOD_MS 1
 #define BUTTON_PIN GPIO_NUM_35
 #define BUTTONS_BITMASK PIN_BIT(BUTTON_PIN)
-#define MAX_PASSWORD_TRIES 3
 #define LV_TICK_PERIOD_MS 1
 
 uint32_t curr_passkey=123456;
 struct nav_data_t curr_nav_data = {0,0,{0}};
 TaskHandle_t display_nav_task_handle = NULL;
 QueueHandle_t button_events = NULL;
-
-uint8_t morse_char;
-uint8_t morse_char_len;
-char morse_password[MAX_PASSWORD_LENGTH];
 
 void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
@@ -70,7 +65,7 @@ void alarm_enable_task(void *pvParameter);
 void morse_password_input_task(void *pvParameter);
 void go_to_deep_sleep();
 void react_to_wakeup_reason();
-void read_morse_word();
+void read_morse_word(QueueHandle_t button_events);
 
 void app_main(){
     esp_err_t ret = nvs_flash_init();
@@ -84,7 +79,7 @@ void app_main(){
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
 
     react_to_wakeup_reason();
-    init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
+    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
 
     // xTaskCreate(&poll_mtu_event_queue_task, "poll_mtu_event_queue_task", 4098, NULL, 5, NULL);
 }
@@ -99,7 +94,7 @@ void react_to_wakeup_reason(){
                 if(pin != BUTTON_PIN){
                     ESP_LOGI(GATTC_TAG,"Turning on alarm");
                 }
-                xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, NULL, 5, NULL);
+                xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) button_events, 5, NULL);
             } else {
                 ESP_LOGW(GATTC_TAG,"Could not get wakeup pin number");
             }
@@ -228,102 +223,3 @@ void go_to_deep_sleep(){
     esp_deep_sleep_start();
 }
 
-void morse_password_input_task(void *pvParameter){
-    char password[MAX_PASSWORD_LENGTH] = "des";
-    char password_len = 3;
-
-    for(int i=0;i<MAX_PASSWORD_TRIES;i++){
-        memset(morse_password,'\0',sizeof(char)*MAX_PASSWORD_LENGTH);
-        read_morse_word();
-        if(!memcmp(morse_password,password,sizeof(char)*password_len)){
-            ESP_LOGI(NAV_TAG,"Password correct");
-            xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, NULL, 5, NULL);
-            
-            strcpy(morse_password,"ok\0");
-            morse_char_len = 0;
-            morse_char = 0;
-            xTaskNotify(
-                display_nav_task_handle,
-                NOTIFY_VALUE_MORSE,
-                eSetValueWithOverwrite
-            );
-            vTaskDelay(pdMS_TO_TICKS(500));
-
-            vTaskDelete(NULL);
-        }else{
-            ESP_LOGI(NAV_TAG,"Password wrong");
-
-            strcpy(morse_password,"wrong\0");
-            morse_char_len = 0;
-            morse_char = 0;
-            xTaskNotify(
-                display_nav_task_handle,
-                NOTIFY_VALUE_MORSE,
-                eSetValueWithOverwrite
-            );
-            
-            vTaskDelay(pdMS_TO_TICKS(500));
-        }
-    }
-    ESP_LOGI(GATTC_TAG,"Turning on alarm");
-    vTaskDelete(NULL);
-}
-
-void read_morse_word(){
-    uint8_t morse_password_len = 0;
-    morse_password_len = 0;
-    morse_char = 0;
-    morse_char_len = 0;
-    int64_t last_char_input_time = esp_timer_get_time() / 1000ULL;
-    bool was_held_flag = false;
-    button_event_t ev;
-
-    xTaskNotify(
-        display_nav_task_handle,
-        NOTIFY_VALUE_MORSE,
-        eSetValueWithOverwrite
-    );
-
-    while (true) {
-        if (esp_timer_get_time() / 1000ULL - last_char_input_time > TIME_BETWEEN_LETTERS && morse_char_len != 0){
-            morse_password[morse_password_len] = bin_morse_2_char(morse_char,morse_char_len);
-            xTaskNotify(
-                display_nav_task_handle,
-                NOTIFY_VALUE_MORSE,
-                eSetValueWithOverwrite
-            );
-            ESP_LOGI(NAV_TAG,"Morse password is %s", morse_password);
-            morse_password_len++;
-            morse_char_len = 0;
-            morse_char = 0;
-        }
-
-        if (esp_timer_get_time() / 1000ULL - last_char_input_time > TIME_BETWEEN_WORDS){
-            ESP_LOGI(NAV_TAG,"Morse password input finished");
-            break;
-        }
-        
-        if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
-                was_held_flag = true;
-            }
-            if ((ev.pin == BUTTON_PIN) && (ev.event == BUTTON_UP)) {
-                if(was_held_flag){
-                    ESP_LOGI(NAV_TAG,"Got long");
-                }else{
-                    ESP_LOGI(NAV_TAG,"Got short");
-                }
-                morse_char |= was_held_flag << morse_char_len;
-                morse_char_len++;
-                xTaskNotify(
-                    display_nav_task_handle,
-                    NOTIFY_VALUE_MORSE,
-                    eSetValueWithOverwrite
-                );
-                was_held_flag = false;
-                last_char_input_time = esp_timer_get_time() / 1000ULL;
-                ESP_LOGI(NAV_TAG,"Morse char is %c", bin_morse_2_char(morse_char,morse_char_len));
-            }
-        }
-    }
-}

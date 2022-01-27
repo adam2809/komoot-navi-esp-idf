@@ -35,6 +35,8 @@
         "button.h": "c",
         "morse.h": "c",
         "esp_gap_ble_api.h": "c",
-        "misc.h": "c"
+        "misc.h": "c",
+        "stdint.h": "c",
+        "cstring": "c"
     }
 }
