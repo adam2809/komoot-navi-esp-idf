@@ -88,7 +88,7 @@ void display_number_row(uint32_t row_content,lv_obj_t* row[]){
 }
 
 void display_passkey(uint32_t passkey){
-    ESP_LOGI(DISPLAY_TAG,"Displaing passkey: %d",passkey);
+    ESP_LOGI(TAG,"Displaing passkey: %d",passkey);
     lv_scr_load(passkey_scr);
 
     display_number_row(passkey/1000,passkey_digits_row_top);
@@ -102,7 +102,7 @@ void display_dir_symbol(uint8_t symbol){
 }
 
 void display_meters(uint32_t meters){
-    ESP_LOGI(DISPLAY_TAG,"Displaing meters: %d",meters);
+    ESP_LOGI(TAG,"Displaing meters: %d",meters);
     lv_scr_load(nav_scr);
 
     if(meters < 1000){
@@ -115,7 +115,7 @@ void display_meters(uint32_t meters){
 }
 
 void display_morse(uint8_t bin_morse,uint8_t len,char* password){
-    ESP_LOGI(DISPLAY_TAG,"Displaing morse");
+    ESP_LOGI(TAG,"Displaing morse");
 
     lv_scr_load(morse_input_scr);
 
@@ -129,4 +129,76 @@ void display_morse(uint8_t bin_morse,uint8_t len,char* password){
     
     lv_label_set_text(morse_password_label,password);
     lv_label_set_text(morse_bin_label,bit_str_rep);
+}
+
+SemaphoreHandle_t xGuiSemaphore;
+
+void display_task(void *pvParameter){
+    (void) pvParameter;
+    xGuiSemaphore = xSemaphoreCreateMutex();
+    
+    lv_color_t* buf=NULL;
+    init_lvgl_display(buf);
+    
+    const esp_timer_create_args_t periodic_timer_args = {
+        .callback = &lv_tick_task,
+        .name = "periodic_gui"
+    };
+    esp_timer_handle_t periodic_timer;
+    ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
+    
+    init_lvgl_objs();
+
+    ESP_LOGI(TAG,"Init lvgl done");
+
+    if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
+        ESP_LOGD(NAV_TAG,"Calling task handler");
+        lv_task_handler();
+        xSemaphoreGive(xGuiSemaphore);
+    }
+    uint32_t ulNotifiedValue;
+    while (1) {
+        xTaskNotifyWait(
+            0x00,      /* Don't clear any notification bits on entry. */
+            ULONG_MAX, /* Reset the notification value to 0 on exit. */
+            &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+            portMAX_DELAY
+        );
+        ESP_LOGI(TAG,"Display task got notification with value %d",ulNotifiedValue);
+        
+        switch(ulNotifiedValue){
+            case NOTIFY_VALUE_NAVIGATION:{
+                if(curr_nav_data.direction!=13&&curr_nav_data.direction!=14&&curr_nav_data.direction!=31){
+                    display_dir_symbol(curr_nav_data.direction);
+                }
+                
+                display_meters(curr_nav_data.distance);
+                break;
+            }            
+            case NOTIFY_VALUE_PASSKEY:{
+                display_passkey(curr_passkey);
+                break;
+            }            
+            case NOTIFY_VALUE_MORSE:{
+                display_morse(morse_char,morse_char_len,morse_password);
+                break;
+            }
+        }
+
+        if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
+            ESP_LOGD(NAV_TAG,"Calling task handler");
+            lv_task_handler();
+            xSemaphoreGive(xGuiSemaphore);
+        }
+    }
+
+    free(buf);
+    vTaskDelete(NULL);
+}
+
+static void lv_tick_task(void *arg) {
+    (void) arg;
+
+    lv_tick_inc(LV_TICK_PERIOD_MS);
 }

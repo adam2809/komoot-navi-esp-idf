@@ -47,7 +47,6 @@
 #include "morse.h"
 
 #define NAV_TAG "NAVIGATION_DISPLAY"
-#define LV_TICK_PERIOD_MS 1
 #define BUTTON_PIN GPIO_NUM_35
 #define BUTTONS_BITMASK PIN_BIT(BUTTON_PIN)
 #define LV_TICK_PERIOD_MS 1
@@ -57,8 +56,6 @@ struct nav_data_t curr_nav_data = {0,0,{0}};
 TaskHandle_t display_nav_task_handle = NULL;
 QueueHandle_t button_events = NULL;
 
-void display_task(void *pvParameter);
-static void lv_tick_task(void *arg);
 void poll_mtu_event_queue_task(void *pvParameter);
 void go_to_deep_sleep();
 void react_to_wakeup_reason();
@@ -112,71 +109,7 @@ void react_to_wakeup_reason(){
 
 
 
-SemaphoreHandle_t xGuiSemaphore;
 
-void display_task(void *pvParameter){
-    (void) pvParameter;
-    xGuiSemaphore = xSemaphoreCreateMutex();
-    
-    lv_color_t* buf=NULL;
-    init_lvgl_display(buf);
-    
-    const esp_timer_create_args_t periodic_timer_args = {
-        .callback = &lv_tick_task,
-        .name = "periodic_gui"
-    };
-    esp_timer_handle_t periodic_timer;
-    ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
-    
-    init_lvgl_objs();
-
-    ESP_LOGI(GATTC_TAG,"Init lvgl done");
-
-    if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-        ESP_LOGD(NAV_TAG,"Calling task handler");
-        lv_task_handler();
-        xSemaphoreGive(xGuiSemaphore);
-    }
-    uint32_t ulNotifiedValue;
-    while (1) {
-        xTaskNotifyWait(
-            0x00,      /* Don't clear any notification bits on entry. */
-            ULONG_MAX, /* Reset the notification value to 0 on exit. */
-            &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
-            portMAX_DELAY
-        );
-        ESP_LOGI(GATTC_TAG,"Display task got notification with value %d",ulNotifiedValue);
-        
-        switch(ulNotifiedValue){
-            case NOTIFY_VALUE_NAVIGATION:{
-                if(curr_nav_data.direction!=13&&curr_nav_data.direction!=14&&curr_nav_data.direction!=31){
-                    display_dir_symbol(curr_nav_data.direction);
-                }
-                
-                display_meters(curr_nav_data.distance);
-                break;
-            }            
-            case NOTIFY_VALUE_PASSKEY:{
-                display_passkey(curr_passkey);
-                break;
-            }            
-            case NOTIFY_VALUE_MORSE:{
-                display_morse(morse_char,morse_char_len,morse_password);
-                break;
-            }
-        }
-
-        if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-            ESP_LOGD(NAV_TAG,"Calling task handler");
-            lv_task_handler();
-            xSemaphoreGive(xGuiSemaphore);
-        }
-    }
-
-    free(buf);
-    vTaskDelete(NULL);
-}
 
 void poll_mtu_event_queue_task(void *pvParameter){  
     configure_mpu(MOTION_DETECTION_SENSITIVITY);  
@@ -190,11 +123,6 @@ void poll_mtu_event_queue_task(void *pvParameter){
     }
 }
 
-static void lv_tick_task(void *arg) {
-    (void) arg;
-
-    lv_tick_inc(LV_TICK_PERIOD_MS);
-}
 
 void go_to_deep_sleep(){
     rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);

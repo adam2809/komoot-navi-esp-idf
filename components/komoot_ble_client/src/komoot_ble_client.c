@@ -1,7 +1,7 @@
 #include "komoot_ble_client.h"
 
-uint32_t* passkey_pointer;
-struct nav_data_t* nav_data_pointer;
+uint32_t passkey_pointer;
+struct nav_data_t nav_data_pointer;
 TaskHandle_t* display_nav_task_handle_pointer;
 
 static esp_bt_uuid_t remote_filter_service_uuid = {
@@ -52,9 +52,7 @@ static bool get_server = false;
 static esp_gattc_char_elem_t *char_elem_result   = NULL;
 static esp_gattc_descr_elem_t *descr_elem_result = NULL;
 
-esp_err_t init_komoot_ble_client(uint32_t* _passkey_pointer,struct nav_data_t* _nav_data_pointer,TaskHandle_t* _display_nav_task_handle_pointer){
-    passkey_pointer = _passkey_pointer;
-    nav_data_pointer = _nav_data_pointer;
+esp_err_t init_komoot_ble_client(TaskHandle_t* _display_nav_task_handle_pointer){
     display_nav_task_handle_pointer = _display_nav_task_handle_pointer;
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
@@ -468,7 +466,7 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
 
         resolve_nav_data(p_data->notify.value,nav_data_pointer);
         ESP_LOGI(GATTC_TAG, "resolved:");
-        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",nav_data_pointer->direction,nav_data_pointer->distance,nav_data_pointer->street);
+        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",nav_data_pointer.direction,nav_data_pointer.distance,nav_data_pointer.street);
         if (*display_nav_task_handle_pointer != NULL){
             xTaskNotify(
                 *display_nav_task_handle_pointer,
@@ -520,10 +518,10 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
     }
 }
 
-void resolve_nav_data(uint8_t* data,struct nav_data_t* target){
-    target->direction = data[4];
-    target->distance = ((uint32_t)data[5]) | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16) | ((uint32_t)data[8] << 24);
-    strcpy(target->street,(char*) &data[9]);
+void resolve_nav_data(uint8_t* data,struct nav_data_t target){
+    target.direction = data[4];
+    target.distance = ((uint32_t)data[5]) | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16) | ((uint32_t)data[8] << 24);
+    strcpy(target.street,(char*) &data[9]);
 }
 
 char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req){
@@ -608,4 +606,12 @@ uint8_t* resolve_service_from_adv_data(uint8_t* adv_data,uint8_t adv_data_length
     }
     
     return &adv_data[5];
+}
+
+
+uint32_t get_passkey(){
+    return passkey_pointer;
+}
+struct nav_data_t* get_nav_data(){
+    return &nav_data_pointer;
 }

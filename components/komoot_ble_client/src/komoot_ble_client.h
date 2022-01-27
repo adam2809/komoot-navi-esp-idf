@@ -10,6 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <string.h>
+#include "display.h"
 
 #define PROFILE_NUM      1
 #define PROFILE_A_APP_ID 0
@@ -30,11 +31,6 @@ struct gattc_profile_inst {
     esp_bd_addr_t remote_bda;
 };
 
-enum display_task_notify_value_t{
-    NOTIFY_VALUE_NAVIGATION,
-    NOTIFY_VALUE_PASSKEY,
-    NOTIFY_VALUE_MORSE
-};
 
 
 struct nav_data_t{
@@ -43,11 +39,14 @@ struct nav_data_t{
     char street[100];
 };
 
-esp_err_t init_komoot_ble_client(uint32_t* _passkey_pointer,struct nav_data_t* _nav_data_pointer,TaskHandle_t* _display_nav_task_handle_pointer);
+esp_err_t init_komoot_ble_client(TaskHandle_t* _display_nav_task_handle_pointer);
 void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param);
 void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param);
-void resolve_nav_data(uint8_t* data,struct nav_data_t* target);
+void resolve_nav_data(uint8_t* data,struct nav_data_t target);
 char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req);
 const char *esp_key_type_to_str(esp_ble_key_type_t key_type);
 uint8_t* resolve_service_from_adv_data(uint8_t* adv_data,uint8_t adv_data_length);
+
+uint32_t get_passkey();
+struct nav_data_t* get_nav_data();
