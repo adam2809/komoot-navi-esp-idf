@@ -84,7 +84,7 @@ void app_main(){
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_nav_task_handle, 1);
 
     react_to_wakeup_reason();
-    // init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
+    init_komoot_ble_client(&curr_passkey,&curr_nav_data,&display_nav_task_handle);
 
     // xTaskCreate(&poll_mtu_event_queue_task, "poll_mtu_event_queue_task", 4098, NULL, 5, NULL);
 }
