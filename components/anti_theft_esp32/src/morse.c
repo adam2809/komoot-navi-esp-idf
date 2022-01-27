@@ -1,5 +1,7 @@
 #include "morse.h"
 
+#define TAG "MORSE"
+
 uint8_t morse_char;
 uint8_t morse_char_len;
 char morse_password[MAX_PASSWORD_LENGTH];

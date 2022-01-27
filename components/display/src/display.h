@@ -8,7 +8,6 @@
 #include "i2c_manager.h"
 #include "morse.h"
 
-#define TAG "DISPLAY"
 #define LV_TICK_PERIOD_MS 1
 
 enum display_task_notify_value_t{

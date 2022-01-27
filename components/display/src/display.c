@@ -1,5 +1,7 @@
 #include "display.h"
 
+#define TAG "DISPLAY"
+
 lv_obj_t* nav_scr;
 lv_obj_t* passkey_scr;
 lv_obj_t* morse_input_scr; 
@@ -153,7 +155,7 @@ void display_task(void *pvParameter){
     ESP_LOGI(TAG,"Init lvgl done");
 
     if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-        ESP_LOGD(NAV_TAG,"Calling task handler");
+        ESP_LOGD(TAG,"Calling task handler");
         lv_task_handler();
         xSemaphoreGive(xGuiSemaphore);
     }
@@ -187,7 +189,7 @@ void display_task(void *pvParameter){
         }
 
         if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-            ESP_LOGD(NAV_TAG,"Calling task handler");
+            ESP_LOGD(TAG,"Calling task handler");
             lv_task_handler();
             xSemaphoreGive(xGuiSemaphore);
         }

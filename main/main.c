@@ -35,8 +35,6 @@
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 
-#include "driver/rtc_io.h"
-#include "esp_sleep.h"
 
 #include "esp_log.h"
 
@@ -107,10 +105,6 @@ void react_to_wakeup_reason(){
     }
 }
 
-
-
-
-
 void poll_mtu_event_queue_task(void *pvParameter){  
     configure_mpu(MOTION_DETECTION_SENSITIVITY);  
     init_mpu_interrupt();
@@ -121,13 +115,5 @@ void poll_mtu_event_queue_task(void *pvParameter){
             ESP_LOGI(NAV_TAG,"Got interrpupt from mtu");
         }
     }
-}
-
-
-void go_to_deep_sleep(){
-    rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);
-    ESP_LOGI(NAV_TAG,"Going to deep sleep");
-    esp_sleep_enable_ext1_wakeup(PIN_BIT(MPU6050_INTERRUPT_INPUT_PIN)|PIN_BIT(BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH);
-    esp_deep_sleep_start();
 }
 

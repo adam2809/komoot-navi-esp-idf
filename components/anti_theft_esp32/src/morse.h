@@ -11,6 +11,7 @@
 #include "esp_log.h"
 
 #include "button.h"
+#include "display.h"
 #include "alarm.h"
 
 #define MAX_PASSWORD_LENGTH 10
@@ -19,7 +20,6 @@
 #define TIME_BETWEEN_WORDS 5000ULL
 #define MAX_PASSWORD_TRIES 3
 
-#define TAG "MORSE"
 
 typedef struct{
     QueueHandle_t buttons_events;
