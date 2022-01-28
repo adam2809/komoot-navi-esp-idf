@@ -21,10 +21,14 @@ void alarm_button_disable_task(void *pvParameter){
 
     vTaskDelete(NULL);
 }
-void go_to_deep_sleep(){
+void go_to_deep_sleep(bool locked){
     rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);
     ESP_LOGI(TAG,"Going to deep sleep");
-    esp_sleep_enable_ext1_wakeup(PIN_BIT(MPU6050_INTERRUPT_INPUT_PIN)|PIN_BIT(CONFIG_BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH);
+    lock_state = locked;
+    esp_sleep_enable_ext1_wakeup(
+        (locked ? PIN_BIT(MPU6050_INTERRUPT_INPUT_PIN) : 0)|
+        PIN_BIT(CONFIG_BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH
+    );
     esp_deep_sleep_start();
 }
 
@@ -45,13 +49,11 @@ void lower_alarm_state(){
 
 void lock(){
     ESP_LOGI(TAG,"Locking");
-    lock_state = true;
-    go_to_deep_sleep();
+    go_to_deep_sleep(true);
 }
 void unlock(){
     ESP_LOGI(TAG,"Unlocking");
-    lock_state = false;
-    go_to_deep_sleep();
+    go_to_deep_sleep(false);
 }
 
 
@@ -70,7 +72,7 @@ void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handl
                     }else{
                         lock();
                     }
-                }else if(pin == MPU6050_INTERRUPT_INPUT_PIN){
+                }else if(pin == MPU6050_INTERRUPT_INPUT_PIN && lock_state == true){
                     raise_alarm_state();
                 }
             } else {
@@ -85,7 +87,7 @@ void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handl
         case ESP_SLEEP_WAKEUP_UNDEFINED:{
             ESP_LOGI(TAG,"Undefined wakeup reason");
             lock_state = false;
-            go_to_deep_sleep();
+            go_to_deep_sleep(false);
             break;
         }
         default:
