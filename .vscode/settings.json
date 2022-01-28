@@ -38,6 +38,7 @@
         "misc.h": "c",
         "stdint.h": "c",
         "cstring": "c",
-        "alarm.h": "c"
+        "alarm.h": "c",
+        "esp_sleep.h": "c"
     }
 }

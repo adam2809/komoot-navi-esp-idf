@@ -15,5 +15,8 @@ bool get_alarm_state();
 void raise_alarm_state();
 void lower_alarm_state();
 
-void alarm_enable_task(void *pvParameter);
+void lock();
+void unlock();
+
+void alarm_button_disable_task(void *pvParameter);
 void go_to_deep_sleep();

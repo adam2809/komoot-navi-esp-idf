@@ -68,19 +68,6 @@ void app_main(){
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_task_handle, 1);
     
     alarm_wakeup(&button_events,&display_task_handle);
-    ESP_LOGI(GATTC_TAG,"Alarm state is %d",get_alarm_state());
     // init_komoot_ble_client(&display_task_handle);
+    configure_mpu();
 }
-
-void poll_mtu_event_queue_task(void *pvParameter){  
-    configure_mpu(MOTION_DETECTION_SENSITIVITY);  
-    init_mpu_interrupt();
-
-    gpio_num_t interrupt_gpio = MPU6050_INTERRUPT_INPUT_PIN;
-    while(1){
-        if(xQueueReceive(mpu_event_queue,&interrupt_gpio, portMAX_DELAY)) {
-            ESP_LOGI(TAG,"Got interrpupt from mtu");
-        }
-    }
-}
-
