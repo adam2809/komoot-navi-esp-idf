@@ -57,7 +57,7 @@ void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handl
                     xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
                 }else if(pin == MPU6050_INTERRUPT_INPUT_PIN){
                     ESP_LOGI(TAG,"Turning on alarm");
-                    xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, (void*) buttons_events, 5, NULL);
+                    xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, (void*) *buttons_events, 5, NULL);
                     alarm_state = 1;
                 }
             } else {

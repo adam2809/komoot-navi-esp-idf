@@ -22,8 +22,8 @@
 
 
 typedef struct{
-    QueueHandle_t buttons_events;
-    TaskHandle_t display_task_handle;
+    QueueHandle_t* buttons_events;
+    TaskHandle_t* display_task_handle;
 } morse_input_params_t;
 
 char morse_password[MAX_PASSWORD_LENGTH+1];
