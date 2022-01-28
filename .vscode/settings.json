@@ -37,6 +37,7 @@
         "esp_gap_ble_api.h": "c",
         "misc.h": "c",
         "stdint.h": "c",
-        "cstring": "c"
+        "cstring": "c",
+        "alarm.h": "c"
     }
 }

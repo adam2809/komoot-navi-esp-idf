@@ -44,16 +44,13 @@
 #include "button.h"
 #include "morse.h"
 
-#define NAV_TAG "NAVIGATION_DISPLAY"
+#define TAG "MAIN"
 #define BUTTONS_BITMASK PIN_BIT(CONFIG_BUTTON_PIN)
 #define LV_TICK_PERIOD_MS 1
 
-uint32_t curr_passkey=123456;
-struct nav_data_t curr_nav_data = {0,0,{0}};
 TaskHandle_t display_task_handle = NULL;
 QueueHandle_t button_events = NULL;
 
-morse_input_params_t morse_input_params; 
 
 void poll_mtu_event_queue_task(void *pvParameter);
 void go_to_deep_sleep();
@@ -69,41 +66,10 @@ void app_main(){
     button_events = button_init(BUTTONS_BITMASK,false);
 
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_task_handle, 1);
-
-    react_to_wakeup_reason();
-    init_komoot_ble_client(&display_task_handle);
-}
-
-void react_to_wakeup_reason(){
-    switch (esp_sleep_get_wakeup_cause()) {
-        case ESP_SLEEP_WAKEUP_EXT1: {
-            uint64_t wakeup_pin_mask = esp_sleep_get_ext1_wakeup_status();
-            if (wakeup_pin_mask != 0) {
-                int pin = __builtin_ffsll(wakeup_pin_mask) - 1;
-                ESP_LOGI(GATTC_TAG,"Wake up from GPIO %d", pin);
-                if(pin != CONFIG_BUTTON_PIN){
-                    ESP_LOGI(GATTC_TAG,"Turning on alarm");
-                }
-                morse_input_params.buttons_events = button_events;
-                morse_input_params.display_task_handle = display_task_handle;
-                xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
-            } else {
-                ESP_LOGW(GATTC_TAG,"Could not get wakeup pin number");
-            }
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_EXT0: {
-            ESP_LOGI(GATTC_TAG,"Wake up from EXT0");
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_UNDEFINED:{
-            xTaskCreate(&alarm_enable_task, "alarm_enable_task", 4098, (void*) button_events, 5, NULL);
-            ESP_LOGI(GATTC_TAG,"Undefined wakeup reason");
-            break;
-        }
-        default:
-            ESP_LOGI(GATTC_TAG,"Not a deep sleep reset");
-    }
+    
+    alarm_wakeup(&button_events,&display_task_handle);
+    ESP_LOGI(GATTC_TAG,"Alarm state is %d",get_alarm_state());
+    // init_komoot_ble_client(&display_task_handle);
 }
 
 void poll_mtu_event_queue_task(void *pvParameter){  
@@ -113,7 +79,7 @@ void poll_mtu_event_queue_task(void *pvParameter){
     gpio_num_t interrupt_gpio = MPU6050_INTERRUPT_INPUT_PIN;
     while(1){
         if(xQueueReceive(mpu_event_queue,&interrupt_gpio, portMAX_DELAY)) {
-            ESP_LOGI(NAV_TAG,"Got interrpupt from mtu");
+            ESP_LOGI(TAG,"Got interrpupt from mtu");
         }
     }
 }
