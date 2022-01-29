@@ -5,6 +5,7 @@
 lv_obj_t* nav_scr;
 lv_obj_t* passkey_scr;
 lv_obj_t* morse_input_scr; 
+lv_obj_t* alarm_notifs_scr; 
 
 lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
@@ -13,6 +14,13 @@ lv_obj_t * morse_password_label = NULL;
 
 lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * dir_symbol = NULL;
+lv_obj_t * alarm_symbol = NULL;
+
+void init_lvgl_objs();
+void display_passkey(uint32_t passkey);
+void display_dir_symbol(uint8_t symbol);
+void display_meters(uint32_t meters);
+void display_morse(uint8_t bin_morse,uint8_t len,char* password);
 
 void init_lvgl_display(lv_color_t* buf) {
     lvgl_i2c_locking(i2c_manager_locking());
@@ -71,6 +79,9 @@ void init_lvgl_objs(){
 
     lv_label_set_text(morse_bin_label,"");
     lv_label_set_text(morse_password_label,"");
+
+    alarm_symbol = lv_img_create(alarm_notifs_scr,NULL);
+    lv_obj_align(alarm_symbol, NULL, LV_ALIGN_CENTER,0,0);
 
     lv_scr_load(lv_obj_create(NULL, NULL));
 }
@@ -132,6 +143,11 @@ void display_morse(uint8_t bin_morse,uint8_t len,char* password){
     lv_label_set_text(morse_password_label,password);
     lv_label_set_text(morse_bin_label,bit_str_rep);
 }
+void display_alarm_notif(){
+    ESP_LOGI(TAG,"Displaing alarm notification");
+    lv_scr_load(alarm_notifs_scr);
+    lv_img_set_src(alarm_symbol,&locked);
+}
 
 SemaphoreHandle_t xGuiSemaphore;
 
@@ -183,6 +199,10 @@ void display_task(void *pvParameter){
             }            
             case NOTIFY_VALUE_MORSE:{
                 display_morse(morse_char,morse_char_len,morse_password);
+                break;
+            }          
+            case NOTIFY_VALUE_ALARM:{
+                display_alarm_notif();
                 break;
             }
         }
