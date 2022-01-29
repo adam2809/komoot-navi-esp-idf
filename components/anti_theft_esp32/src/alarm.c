@@ -47,8 +47,19 @@ void lower_alarm_state(){
     alarm_state = false;
 }
 
-void lock(){
+void lock(void *pvParameter){
     ESP_LOGI(TAG,"Locking");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    if (*morse_input_params.display_task_handle != NULL){
+        xTaskNotify(
+            *morse_input_params.display_task_handle,
+            NOTIFY_VALUE_LOCK,
+            eSetValueWithOverwrite
+        );
+    }else{
+        ESP_LOGE(GATTC_TAG,"NULL task handle");
+    }
+    vTaskDelay(pdMS_TO_TICKS(1000));
     go_to_deep_sleep(true);
 }
 void unlock(){
@@ -69,8 +80,8 @@ void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handl
                 if(pin == CONFIG_BUTTON_PIN){
                     if (lock_state){
                         xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
-                    }else{
-                        lock();
+                    }else{                        
+                        xTaskCreate(&lock, "lock_task", 4098, NULL, 5, NULL);
                     }
                 }else if(pin == MPU6050_INTERRUPT_INPUT_PIN && lock_state == true){
                     raise_alarm_state();

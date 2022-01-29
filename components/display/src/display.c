@@ -143,8 +143,8 @@ void display_morse(uint8_t bin_morse,uint8_t len,char* password){
     lv_label_set_text(morse_password_label,password);
     lv_label_set_text(morse_bin_label,bit_str_rep);
 }
-void display_alarm_notif(){
-    ESP_LOGI(TAG,"Displaing alarm notification");
+void display_lock_notif(){
+    ESP_LOGI(TAG,"Displaing lock notification");
     lv_scr_load(alarm_notifs_scr);
     lv_img_set_src(alarm_symbol,&locked);
 }
@@ -193,6 +193,10 @@ void display_task(void *pvParameter){
                 display_meters(nav_data.distance);
                 break;
             }            
+            case NOTIFY_VALUE_CLEAR:{    
+                lv_scr_load(lv_obj_create(NULL, NULL));
+                break;
+            }             
             case NOTIFY_VALUE_PASSKEY:{
                 display_passkey(passkey);
                 break;
@@ -201,8 +205,8 @@ void display_task(void *pvParameter){
                 display_morse(morse_char,morse_char_len,morse_password);
                 break;
             }          
-            case NOTIFY_VALUE_ALARM:{
-                display_alarm_notif();
+            case NOTIFY_VALUE_LOCK:{
+                display_lock_notif();
                 break;
             }
         }

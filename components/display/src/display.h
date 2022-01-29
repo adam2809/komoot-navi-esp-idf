@@ -13,10 +13,11 @@
 #define LV_TICK_PERIOD_MS 1
 
 enum display_task_notify_value_t{
+    NOTIFY_VALUE_CLEAR,
     NOTIFY_VALUE_NAVIGATION,
     NOTIFY_VALUE_PASSKEY,
     NOTIFY_VALUE_MORSE,
-    NOTIFY_VALUE_ALARM
+    NOTIFY_VALUE_LOCK
 };
 
 void display_task(void *pvParameter);
