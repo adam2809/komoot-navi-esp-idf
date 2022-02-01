@@ -51,7 +51,6 @@ bool get_alarm_state(){
     return alarm_state;
 }
 
-
 void raise_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm on");
     alarm_state = true;
@@ -63,12 +62,12 @@ void lower_alarm_state(){
     alarm_state = false;
 }
 
-
 void lock(void *pvParameter){
     ESP_LOGI(TAG,"Locking");
     display_notif(NOTIFY_VALUE_LOCK,1500);
     go_to_deep_sleep(true);
 }
+
 void unlock(){
     ESP_LOGI(TAG,"Unlocking");
     display_notif(NOTIFY_VALUE_UNLOCK,1500);

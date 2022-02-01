@@ -223,6 +223,7 @@ lv_obj_t* blank_scr;
 
 lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
+lv_obj_t * morse_prompt_label = NULL;
 lv_obj_t * morse_bin_label = NULL;
 lv_obj_t * morse_password_label = NULL;
 
@@ -288,12 +289,15 @@ void init_lvgl_objs(){
 
     morse_bin_label = lv_label_create(morse_input_scr,NULL);
     morse_password_label = lv_label_create(morse_input_scr,NULL);
+    morse_prompt_label = lv_label_create(morse_input_scr,NULL);
 
     lv_obj_align(morse_bin_label, NULL, LV_ALIGN_CENTER,0,0);
     lv_obj_align(morse_password_label, NULL, LV_ALIGN_IN_BOTTOM_MID,0,0);
+    lv_obj_align(morse_prompt_label, NULL, LV_ALIGN_IN_TOP_MID,0,0);
 
     lv_label_set_text(morse_bin_label,"");
     lv_label_set_text(morse_password_label,"");
+    lv_label_set_text(morse_prompt_label,"Password:");
 
     alarm_symbol = lv_img_create(alarm_notifs_scr,NULL);
     lv_obj_align(alarm_symbol, NULL, LV_ALIGN_CENTER,0,0);
