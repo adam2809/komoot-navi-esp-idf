@@ -3,7 +3,6 @@
 #include "images/digits.h"
 #include "images/misc.h"
 #include "images/dir_symbols.h"
-#include "images/alarm_symbols.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include "i2c_manager.h"
@@ -24,4 +23,3 @@ void display_task(void *pvParameter);
 static void lv_tick_task(void *arg);
 
 void init_lvgl_display(lv_color_t* buf);
-

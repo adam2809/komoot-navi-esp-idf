@@ -39,6 +39,11 @@
         "stdint.h": "c",
         "cstring": "c",
         "alarm.h": "c",
-        "esp_sleep.h": "c"
+        "esp_sleep.h": "c",
+        "mutex": "cpp",
+        "lvgl.h": "c",
+        "dir_symbols.h": "c",
+        "lvgl_helpers.h": "c",
+        "stdio.h": "c"
     }
 }
