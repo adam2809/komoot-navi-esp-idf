@@ -219,6 +219,7 @@ lv_obj_t* nav_scr;
 lv_obj_t* passkey_scr;
 lv_obj_t* morse_input_scr; 
 lv_obj_t* alarm_notifs_scr; 
+lv_obj_t* blank_scr; 
 
 lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
@@ -296,7 +297,11 @@ void init_lvgl_objs(){
 
     alarm_symbol = lv_img_create(alarm_notifs_scr,NULL);
     lv_obj_align(alarm_symbol, NULL, LV_ALIGN_CENTER,0,0);
-    lv_scr_load(lv_obj_create(NULL, NULL));
+
+    blank_scr = lv_obj_create(NULL, NULL); 
+    lv_scr_load(blank_scr);
+    lv_obj_clean(lv_scr_act());
+    lv_task_handler();
 }
 
 void display_number_row(uint32_t row_content,lv_obj_t* row[]){
@@ -392,14 +397,14 @@ void display_task(void *pvParameter){
     init_lvgl_objs();
 
     ESP_LOGI(TAG,"Init lvgl done");
-
-    if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-        ESP_LOGD(TAG,"Calling task handler");
-        lv_task_handler();
-        xSemaphoreGive(xGuiSemaphore);
-    }
     uint32_t ulNotifiedValue;
     while (1) {
+        if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
+            ESP_LOGD(TAG,"Calling task handler");
+            lv_task_handler();
+            xSemaphoreGive(xGuiSemaphore);
+        }
+
         xTaskNotifyWait(
             0x00,      /* Don't clear any notification bits on entry. */
             ULONG_MAX, /* Reset the notification value to 0 on exit. */
@@ -416,8 +421,8 @@ void display_task(void *pvParameter){
                 display_meters(nav_data.distance);
                 break;
             }            
-            case NOTIFY_VALUE_CLEAR:{     
-                lv_obj_clean(lv_scr_act());
+            case NOTIFY_VALUE_CLEAR:{         
+                lv_scr_load(blank_scr);
                 break;
             }             
             case NOTIFY_VALUE_PASSKEY:{
@@ -442,11 +447,6 @@ void display_task(void *pvParameter){
             }
         }
 
-        if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
-            ESP_LOGD(TAG,"Calling task handler");
-            lv_task_handler();
-            xSemaphoreGive(xGuiSemaphore);
-        }
     }
 
     free(buf);
