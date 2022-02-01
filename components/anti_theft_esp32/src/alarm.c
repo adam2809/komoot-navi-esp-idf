@@ -5,6 +5,7 @@
 bool alarm_state = false;
 RTC_NOINIT_ATTR bool lock_state;
 morse_input_params_t morse_input_params;
+void display_notif(uint8_t notify_val);
 
 void alarm_button_disable_task(void *pvParameter){
     button_event_t ev;
@@ -41,17 +42,30 @@ void raise_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm on");
     alarm_state = true;
     xTaskCreate(&alarm_button_disable_task, "alarm_button_disable_task", 4098, NULL, 5, NULL);
+    display_notif(NOTIFY_VALUE_ALARM);
 }
 void lower_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm off");
     alarm_state = false;
 }
 
-void display_lock_toggle_notif(bool locking){
+
+void lock(void *pvParameter){
+    ESP_LOGI(TAG,"Locking");
+    display_notif(NOTIFY_VALUE_LOCK);
+    go_to_deep_sleep(true);
+}
+void unlock(){
+    ESP_LOGI(TAG,"Unlocking");
+    display_notif(NOTIFY_VALUE_UNLOCK);
+    go_to_deep_sleep(false);
+}
+
+void display_notif(uint8_t notify_val){
     if (*morse_input_params.display_task_handle != NULL){
         xTaskNotify(
             *morse_input_params.display_task_handle,
-            locking ? NOTIFY_VALUE_LOCK : NOTIFY_VALUE_UNLOCK,
+            notify_val,
             eSetValueWithOverwrite
         );
         vTaskDelay(pdMS_TO_TICKS(3000));
@@ -65,19 +79,6 @@ void display_lock_toggle_notif(bool locking){
         ESP_LOGE(GATTC_TAG,"NULL task handle");
     }
 }
-
-void lock(void *pvParameter){
-    ESP_LOGI(TAG,"Locking");
-    display_lock_toggle_notif(true);
-    go_to_deep_sleep(true);
-}
-void unlock(){
-    ESP_LOGI(TAG,"Unlocking");
-    display_lock_toggle_notif(false);
-    go_to_deep_sleep(false);
-}
-
-
 void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handle){
     morse_input_params.buttons_events = buttons_events;
     morse_input_params.display_task_handle = display_task_handle;

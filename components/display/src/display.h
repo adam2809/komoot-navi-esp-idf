@@ -17,7 +17,8 @@ enum display_task_notify_value_t{
     NOTIFY_VALUE_PASSKEY,
     NOTIFY_VALUE_MORSE,
     NOTIFY_VALUE_LOCK,
-    NOTIFY_VALUE_UNLOCK
+    NOTIFY_VALUE_UNLOCK,
+    NOTIFY_VALUE_ALARM
 };
 
 void display_task(void *pvParameter);
