@@ -47,12 +47,11 @@ void lower_alarm_state(){
     alarm_state = false;
 }
 
-void lock(void *pvParameter){
-    ESP_LOGI(TAG,"Locking");
+void display_lock_toggle_notif(bool locking){
     if (*morse_input_params.display_task_handle != NULL){
         xTaskNotify(
             *morse_input_params.display_task_handle,
-            NOTIFY_VALUE_LOCK,
+            locking ? NOTIFY_VALUE_LOCK : NOTIFY_VALUE_UNLOCK,
             eSetValueWithOverwrite
         );
         vTaskDelay(pdMS_TO_TICKS(3000));
@@ -65,10 +64,16 @@ void lock(void *pvParameter){
     }else{
         ESP_LOGE(GATTC_TAG,"NULL task handle");
     }
+}
+
+void lock(void *pvParameter){
+    ESP_LOGI(TAG,"Locking");
+    display_lock_toggle_notif(true);
     go_to_deep_sleep(true);
 }
 void unlock(){
     ESP_LOGI(TAG,"Unlocking");
+    display_lock_toggle_notif(false);
     go_to_deep_sleep(false);
 }
 

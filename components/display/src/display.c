@@ -217,7 +217,7 @@ void init_lvgl_objs(){
 
     alarm_symbol = lv_img_create(alarm_notifs_scr,NULL);
     lv_obj_align(alarm_symbol, NULL, LV_ALIGN_CENTER,0,0);
-    lv_obj_clean(lv_scr_act());
+    lv_scr_load(lv_obj_create(NULL, NULL));
 }
 
 void display_number_row(uint32_t row_content,lv_obj_t* row[]){
@@ -282,6 +282,11 @@ void display_lock_notif(){
     lv_scr_load(alarm_notifs_scr);
     lv_img_set_src(alarm_symbol,&locked);
 }
+void display_unlock_notif(){
+    ESP_LOGI(TAG,"Displaing unlock notification");
+    lv_scr_load(alarm_notifs_scr);
+    lv_img_set_src(alarm_symbol,&unlocked);
+}
 
 SemaphoreHandle_t xGuiSemaphore;
 
@@ -341,6 +346,10 @@ void display_task(void *pvParameter){
             }          
             case NOTIFY_VALUE_LOCK:{
                 display_lock_notif();
+                break;
+            }          
+            case NOTIFY_VALUE_UNLOCK:{
+                display_unlock_notif();
                 break;
             }
         }
