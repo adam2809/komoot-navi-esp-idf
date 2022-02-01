@@ -5,7 +5,8 @@
 bool alarm_state = false;
 RTC_NOINIT_ATTR bool lock_state;
 morse_input_params_t morse_input_params;
-void display_notif(uint8_t notify_val);
+TaskHandle_t alarm_ringing_task_handle;
+void display_notif(uint8_t notify_val,int display_time_ms);
 
 void alarm_button_disable_task(void *pvParameter){
     button_event_t ev;
@@ -14,6 +15,10 @@ void alarm_button_disable_task(void *pvParameter){
         if (queue != NULL && xQueueReceive(queue, &ev, 100/portTICK_PERIOD_MS)) {
             if ((ev.pin == CONFIG_BUTTON_PIN) && (ev.event == BUTTON_UP)) {                        
                 xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
+
+                if(alarm_ringing_task_handle != NULL){
+                    vTaskDelete(alarm_ringing_task_handle);
+                }
                 vTaskDelete(NULL);
             }
         }
@@ -22,6 +27,15 @@ void alarm_button_disable_task(void *pvParameter){
 
     vTaskDelete(NULL);
 }
+
+void alarm_ringing_task(void *pvParameter){
+    while(1){  
+        display_notif(NOTIFY_VALUE_ALARM,ALARM_NOTIF_FLASHING_FREQ);
+
+        vTaskDelay(ALARM_NOTIF_FLASHING_FREQ / portTICK_RATE_MS);
+    }
+}
+
 void go_to_deep_sleep(bool locked){
     rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);
     ESP_LOGI(TAG,"Going to deep sleep");
@@ -42,7 +56,7 @@ void raise_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm on");
     alarm_state = true;
     xTaskCreate(&alarm_button_disable_task, "alarm_button_disable_task", 4098, NULL, 5, NULL);
-    display_notif(NOTIFY_VALUE_ALARM);
+    xTaskCreate(&alarm_ringing_task, "alarm_ringing_task", 4098, NULL, 5, &alarm_ringing_task_handle);
 }
 void lower_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm off");
@@ -52,23 +66,23 @@ void lower_alarm_state(){
 
 void lock(void *pvParameter){
     ESP_LOGI(TAG,"Locking");
-    display_notif(NOTIFY_VALUE_LOCK);
+    display_notif(NOTIFY_VALUE_LOCK,1500);
     go_to_deep_sleep(true);
 }
 void unlock(){
     ESP_LOGI(TAG,"Unlocking");
-    display_notif(NOTIFY_VALUE_UNLOCK);
+    display_notif(NOTIFY_VALUE_UNLOCK,1500);
     go_to_deep_sleep(false);
 }
 
-void display_notif(uint8_t notify_val){
+void display_notif(uint8_t notify_val,int display_time_ms){
     if (*morse_input_params.display_task_handle != NULL){
         xTaskNotify(
             *morse_input_params.display_task_handle,
             notify_val,
             eSetValueWithOverwrite
         );
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(display_time_ms));
         xTaskNotify(
             *morse_input_params.display_task_handle,
             NOTIFY_VALUE_CLEAR,

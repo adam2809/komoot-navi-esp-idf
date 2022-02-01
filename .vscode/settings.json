@@ -45,6 +45,7 @@
         "dir_symbols.h": "c",
         "lvgl_helpers.h": "c",
         "stdio.h": "c",
-        "condition_variable": "c"
+        "condition_variable": "c",
+        "queue.h": "c"
     }
 }

@@ -9,6 +9,8 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#define ALARM_NOTIF_FLASHING_FREQ 200
+
 void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handle);
 
 bool get_alarm_state();
