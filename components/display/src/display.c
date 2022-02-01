@@ -297,11 +297,6 @@ void init_lvgl_objs(){
 
     alarm_symbol = lv_img_create(alarm_notifs_scr,NULL);
     lv_obj_align(alarm_symbol, NULL, LV_ALIGN_CENTER,0,0);
-
-    blank_scr = lv_obj_create(NULL, NULL); 
-    lv_scr_load(blank_scr);
-    lv_obj_clean(lv_scr_act());
-    lv_task_handler();
 }
 
 void display_number_row(uint32_t row_content,lv_obj_t* row[]){
@@ -422,7 +417,7 @@ void display_task(void *pvParameter){
                 break;
             }            
             case NOTIFY_VALUE_CLEAR:{         
-                lv_scr_load(blank_scr);
+                lv_obj_clean(lv_scr_act());
                 break;
             }             
             case NOTIFY_VALUE_PASSKEY:{
