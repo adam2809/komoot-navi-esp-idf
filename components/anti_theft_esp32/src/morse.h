@@ -21,7 +21,7 @@
 #define MAX_PASSWORD_TRIES 3
 
 
-typedef struct{
+typedef struct morse_input_params_s{
     QueueHandle_t* buttons_events;
     TaskHandle_t* display_task_handle;
 } morse_input_params_t;

@@ -11,12 +11,16 @@
 
 #define ALARM_NOTIF_FLASHING_FREQ 200
 
-void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handle);
+struct morse_input_params_s;
+
+void alarm_init(struct morse_input_params_s params);
 
 bool get_alarm_state();
 void raise_alarm_state();
 void lower_alarm_state();
 
+bool get_lock_state();
+void init_lock_state();
 void lock();
 void unlock();
 

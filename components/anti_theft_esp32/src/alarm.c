@@ -4,9 +4,13 @@
 
 bool alarm_state = false;
 RTC_NOINIT_ATTR bool lock_state;
-morse_input_params_t morse_input_params;
 TaskHandle_t alarm_ringing_task_handle;
+morse_input_params_t morse_input_params;
 void display_notif(uint8_t notify_val,int display_time_ms);
+
+void alarm_init(morse_input_params_t params){
+    morse_input_params = params;
+}
 
 void alarm_button_disable_task(void *pvParameter){
     button_event_t ev;
@@ -62,7 +66,7 @@ void lower_alarm_state(){
     alarm_state = false;
 }
 
-void lock(void *pvParameter){
+void lock(){
     ESP_LOGI(TAG,"Locking");
     display_notif(NOTIFY_VALUE_LOCK,1500);
     go_to_deep_sleep(true);
@@ -92,40 +96,10 @@ void display_notif(uint8_t notify_val,int display_time_ms){
         ESP_LOGE(GATTC_TAG,"NULL task handle");
     }
 }
-void alarm_wakeup(QueueHandle_t* buttons_events,TaskHandle_t* display_task_handle){
-    morse_input_params.buttons_events = buttons_events;
-    morse_input_params.display_task_handle = display_task_handle;
-    switch (esp_sleep_get_wakeup_cause()) {
-        case ESP_SLEEP_WAKEUP_EXT1: {
-            uint64_t wakeup_pin_mask = esp_sleep_get_ext1_wakeup_status();
-            if (wakeup_pin_mask != 0) {
-                int pin = __builtin_ffsll(wakeup_pin_mask) - 1;
-                ESP_LOGI(TAG,"Wake up from GPIO %d", pin);
-                if(pin == CONFIG_BUTTON_PIN){
-                    if (lock_state){
-                        xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
-                    }else{                        
-                        xTaskCreate(&lock, "lock_task", 4098, NULL, 5, NULL);
-                    }
-                }else if(pin == MPU6050_INTERRUPT_INPUT_PIN && lock_state == true){
-                    raise_alarm_state();
-                }
-            } else {
-                ESP_LOGW(TAG,"Could not get wakeup pin number");
-            }
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_EXT0: {
-            ESP_LOGI(TAG,"Wake up from EXT0");
-            break;
-        }
-        case ESP_SLEEP_WAKEUP_UNDEFINED:{
-            ESP_LOGI(TAG,"Undefined wakeup reason");
-            lock_state = false;
-            go_to_deep_sleep(false);
-            break;
-        }
-        default:
-            ESP_LOGI(TAG,"Not a deep sleep reset");
-    }
+
+bool get_lock_state(){
+    return lock_state;
+}
+void init_lock_state(){
+    lock_state = false;
 }
