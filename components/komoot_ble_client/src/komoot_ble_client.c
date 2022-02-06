@@ -199,10 +199,10 @@ void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
         switch (scan_result->scan_rst.search_evt) {
         case ESP_GAP_SEARCH_INQ_RES_EVT:
             esp_log_buffer_hex(GATTC_TAG, scan_result->scan_rst.bda, 6);
-            ESP_LOGD(GATTC_TAG, "searched Adv Data Len %d, Scan Response Len %d", scan_result->scan_rst.adv_data_len, scan_result->scan_rst.scan_rsp_len);
-            ESP_LOGD(GATTC_TAG, "searched Device advertising data:");
+            ESP_LOGI(GATTC_TAG, "searched Adv Data Len %d, Scan Response Len %d", scan_result->scan_rst.adv_data_len, scan_result->scan_rst.scan_rsp_len);
+            ESP_LOGI(GATTC_TAG, "searched Device advertising data:");
             esp_log_buffer_hex(GATTC_TAG, scan_result->scan_rst.ble_adv, scan_result->scan_rst.adv_data_len);
-            ESP_LOGD(GATTC_TAG, "searched Device name:");            
+            ESP_LOGI(GATTC_TAG, "searched Device name:");            
             adv_name = esp_ble_resolve_adv_data(scan_result->scan_rst.ble_adv,ESP_BLE_AD_TYPE_NAME_CMPL, &adv_name_len);
             esp_log_buffer_char(GATTC_TAG,adv_name,adv_name_len);
             adv_service = resolve_service_from_adv_data(scan_result->scan_rst.ble_adv,scan_result->scan_rst.adv_data_len);
@@ -600,10 +600,10 @@ const char *esp_key_type_to_str(esp_ble_key_type_t key_type){
 
 
 uint8_t* resolve_service_from_adv_data(uint8_t* adv_data,uint8_t adv_data_length){
-    if (adv_data_length != EXPECTED_ADV_DATA_LEN){
+    if (adv_data_length < EXPECTED_ADV_DATA_LEN){
         ESP_LOGE(GATTC_TAG,"Advertising data has wrong length: %d",adv_data_length);
         return NULL;
     }
     
-    return &adv_data[5];
+    return &adv_data[(adv_data_length-EXPECTED_ADV_DATA_LEN)];
 }
