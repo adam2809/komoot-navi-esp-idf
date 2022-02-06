@@ -77,7 +77,6 @@ void read_morse_word(QueueHandle_t button_events,TaskHandle_t display_task_handl
     morse_char = 0;
     morse_char_len = 0;
     int64_t last_char_input_time = esp_timer_get_time() / 1000ULL;
-    bool was_held_flag = false;
     button_event_t ev;
 
     xTaskNotify(
@@ -106,23 +105,24 @@ void read_morse_word(QueueHandle_t button_events,TaskHandle_t display_task_handl
         }
         
         if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
-            if ((ev.pin == CONFIG_BUTTON_PIN) && (ev.event == BUTTON_HELD)) {
-                was_held_flag = true;
-            }
-            if ((ev.pin == CONFIG_BUTTON_PIN) && (ev.event == BUTTON_UP)) {
-                if(was_held_flag){
+            if (ev.event == BUTTON_UP) {
+                bool is_long = false;
+                if(ev.pin == CONFIG_LEFT_BUTTON_PIN){
                     ESP_LOGI(TAG,"Got long");
-                }else{
+                    is_long = true;
+                }else if(ev.pin == CONFIG_RIGHT_BUTTON_PIN){
                     ESP_LOGI(TAG,"Got short");
+                    is_long = false;
+                }else{
+                    ESP_LOGI(TAG,"Undefined button pin");
                 }
-                morse_char |= was_held_flag << morse_char_len;
+                morse_char |= is_long << morse_char_len;
                 morse_char_len++;
                 xTaskNotify(
                     display_task_handle,
                     NOTIFY_VALUE_MORSE,
                     eSetValueWithOverwrite
                 );
-                was_held_flag = false;
                 last_char_input_time = esp_timer_get_time() / 1000ULL;
                 ESP_LOGI(TAG,"Morse char is %c", bin_morse_2_char(morse_char,morse_char_len));
             }

@@ -17,7 +17,7 @@ void alarm_button_disable_task(void *pvParameter){
     while(1){
         QueueHandle_t queue = *morse_input_params.buttons_events;
         if (queue != NULL && xQueueReceive(queue, &ev, 100/portTICK_PERIOD_MS)) {
-            if ((ev.pin == CONFIG_BUTTON_PIN) && (ev.event == BUTTON_UP)) {                        
+            if ((ev.pin == CONFIG_LEFT_BUTTON_PIN) && (ev.event == BUTTON_UP)) {                        
                 xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
 
                 if(alarm_ringing_task_handle != NULL){
@@ -46,7 +46,7 @@ void go_to_deep_sleep(bool locked){
     lock_state = locked;
     esp_sleep_enable_ext1_wakeup(
         (locked ? PIN_BIT(CONFIG_MPU6050_INTERRUPT_INPUT_PIN) : 0)|
-        PIN_BIT(CONFIG_BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH
+        PIN_BIT(CONFIG_LEFT_BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH
     );
     esp_deep_sleep_start();
 }
