@@ -66,7 +66,6 @@ void app_main(){
 
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_task_handle, 1);
     
-    // init_komoot_ble_client(&display_task_handle);
     configure_mpu();
     wakeup(&button_events,&display_task_handle);
 }
@@ -80,11 +79,15 @@ void wakeup(){
             if (wakeup_pin_mask != 0) {
                 int pin = __builtin_ffsll(wakeup_pin_mask) - 1;
                 ESP_LOGI(TAG,"Wake up from GPIO %d", pin);
-                if(pin == CONFIG_LEFT_BUTTON_PIN){
+                if(pin == CONFIG_LEFT_BUTTON_PIN || pin == CONFIG_RIGHT_BUTTON_PIN){
                     if (get_lock_state()){
                         xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
                     }else{                        
-                        xTaskCreate(&lock, "lock_task", 4098, NULL, 5, NULL);
+                        if(pin == CONFIG_LEFT_BUTTON_PIN){
+                            xTaskCreate(&lock, "lock_task", 4098, NULL, 5, NULL);
+                        }else{    
+                            init_komoot_ble_client(&display_task_handle);
+                        }
                     }
                 }else if(pin == CONFIG_MPU6050_INTERRUPT_INPUT_PIN && get_lock_state()){
                     raise_alarm_state();

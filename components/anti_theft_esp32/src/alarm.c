@@ -45,8 +45,7 @@ void go_to_deep_sleep(bool locked){
     ESP_LOGI(TAG,"Going to deep sleep");
     lock_state = locked;
     esp_sleep_enable_ext1_wakeup(
-        (locked ? PIN_BIT(CONFIG_MPU6050_INTERRUPT_INPUT_PIN) : 0)|
-        PIN_BIT(CONFIG_LEFT_BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH
+        (locked ? PIN_BIT(CONFIG_MPU6050_INTERRUPT_INPUT_PIN) : 0)|PIN_BIT(CONFIG_LEFT_BUTTON_PIN)|PIN_BIT(CONFIG_RIGHT_BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH
     );
     esp_deep_sleep_start();
 }
