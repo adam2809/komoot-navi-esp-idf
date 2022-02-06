@@ -41,11 +41,11 @@ void alarm_ringing_task(void *pvParameter){
 }
 
 void go_to_deep_sleep(bool locked){
-    rtc_gpio_hold_en(MPU6050_INTERRUPT_INPUT_PIN);
+    rtc_gpio_hold_en(CONFIG_MPU6050_INTERRUPT_INPUT_PIN);
     ESP_LOGI(TAG,"Going to deep sleep");
     lock_state = locked;
     esp_sleep_enable_ext1_wakeup(
-        (locked ? PIN_BIT(MPU6050_INTERRUPT_INPUT_PIN) : 0)|
+        (locked ? PIN_BIT(CONFIG_MPU6050_INTERRUPT_INPUT_PIN) : 0)|
         PIN_BIT(CONFIG_BUTTON_PIN),ESP_EXT1_WAKEUP_ANY_HIGH
     );
     esp_deep_sleep_start();

@@ -1383,6 +1383,12 @@ CONFIG_WPA_MBEDTLS_CRYPTO=y
 # end of Supplicant
 
 #
+# Anti theft system configuration
+#
+CONFIG_MPU6050_INTERRUPT_INPUT_PIN=13
+# end of Anti theft system configuration
+
+#
 # Button pins configuration
 #
 CONFIG_BUTTON_PIN=35

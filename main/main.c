@@ -86,7 +86,7 @@ void wakeup(){
                     }else{                        
                         xTaskCreate(&lock, "lock_task", 4098, NULL, 5, NULL);
                     }
-                }else if(pin == MPU6050_INTERRUPT_INPUT_PIN && get_lock_state()){
+                }else if(pin == CONFIG_MPU6050_INTERRUPT_INPUT_PIN && get_lock_state()){
                     raise_alarm_state();
                 }
             } else {
