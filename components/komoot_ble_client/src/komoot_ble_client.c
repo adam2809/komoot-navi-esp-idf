@@ -462,6 +462,8 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         }else{
             ESP_LOGI(GATTC_TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
         }
+        ESP_LOGI(GATTC_TAG, "ESP_GATTC_NOTIFY_EVT, value length: %d",p_data->notify.value_len);
+
         esp_log_buffer_hex(GATTC_TAG, p_data->notify.value, p_data->notify.value_len);
 
         resolve_nav_data(p_data->notify.value,nav_data);
