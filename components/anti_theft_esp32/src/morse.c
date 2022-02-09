@@ -65,6 +65,12 @@ void morse_password_input_task(void *pvParameter){
             vTaskDelete(NULL);
         }else{
             ESP_LOGI(TAG,"Password wrong");
+            xTaskNotify(
+                *display_task_handle,
+                NOTIFY_VALUE_WRONG_PASS,
+                eSetValueWithOverwrite
+            );
+            vTaskDelay(pdMS_TO_TICKS(WRONG_PASS_DELAY_MS));
         }
     }
     raise_alarm_state();

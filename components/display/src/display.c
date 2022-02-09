@@ -363,6 +363,15 @@ void display_morse(uint8_t bin_morse,uint8_t len,char* password){
     lv_label_set_text(morse_password_label,password);
     lv_label_set_text(morse_bin_label,bit_str_rep);
 }
+
+void display_wrong_password(){
+    ESP_LOGI(TAG,"Displaing wrong password");
+
+    lv_scr_load(morse_input_scr);
+
+    lv_label_set_text(morse_bin_label,"Wrong!");
+}
+
 void display_lock_notif(){
     ESP_LOGI(TAG,"Displaing lock notification");
     lv_scr_load(alarm_notifs_scr);
@@ -406,6 +415,7 @@ void display_task(void *pvParameter){
             lv_task_handler();
             xSemaphoreGive(xGuiSemaphore);
         }
+        ESP_LOGI(TAG,"Waiting for notification");
 
         xTaskNotifyWait(
             0x00,      /* Don't clear any notification bits on entry. */
@@ -433,6 +443,10 @@ void display_task(void *pvParameter){
             }            
             case NOTIFY_VALUE_MORSE:{
                 display_morse(morse_char,morse_char_len,morse_password);
+                break;
+            }               
+            case NOTIFY_VALUE_WRONG_PASS:{
+                display_wrong_password();
                 break;
             }          
             case NOTIFY_VALUE_LOCK:{

@@ -19,6 +19,7 @@
 #define TIME_BETWEEN_LETTERS 2000ULL
 #define TIME_BETWEEN_WORDS 5000ULL
 #define MAX_PASSWORD_TRIES 3
+#define WRONG_PASS_DELAY_MS 800
 
 
 typedef struct morse_input_params_s{
