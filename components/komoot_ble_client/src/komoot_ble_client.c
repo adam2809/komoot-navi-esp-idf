@@ -1,7 +1,11 @@
 #include "komoot_ble_client.h"
 
 uint32_t passkey;
-struct nav_data_t nav_data;
+struct nav_data_t nav_data={
+    .id=0,
+    .direction=0,
+    .distance=0
+};
 TaskHandle_t* display_nav_task_handle_pointer;
 
 static esp_bt_uuid_t remote_filter_service_uuid = {
@@ -152,6 +156,16 @@ esp_err_t init_komoot_ble_client(TaskHandle_t* _display_nav_task_handle_pointer)
     and the init key means which key you can distribute to the slave. */
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
+
+    if (*display_nav_task_handle_pointer != NULL){
+        xTaskNotify(
+            *display_nav_task_handle_pointer,
+            NOTIFY_VALUE_NAVIGATION,
+            eSetValueWithOverwrite
+        );
+    }else{
+        ESP_LOGE(GATTC_TAG,"NULL task handle");
+    }
 
     return ESP_OK;
 }

@@ -296,7 +296,7 @@ void init_lvgl_objs(){
     lv_obj_set_size(bt_symbol, 20, 20);
     lv_obj_add_style(bt_symbol,LV_OBJ_PART_ALL, &bt_symbol_style);
     lv_obj_align(bt_symbol, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
-    lv_obj_set_hidden(bt_symbol,true);
+    lv_obj_set_hidden(bt_symbol,false);
 
     morse_bin_label = lv_label_create(morse_input_scr,NULL);
     morse_password_label = lv_label_create(morse_input_scr,NULL);
