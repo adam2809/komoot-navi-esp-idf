@@ -229,7 +229,10 @@ lv_obj_t * morse_password_label = NULL;
 
 lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * dir_symbol = NULL;
-lv_obj_t * alarm_symbol = NULL;
+lv_obj_t* bt_symbol = NULL;
+lv_style_t bt_symbol_style;
+
+lv_obj_t* alarm_symbol;
 
 void init_lvgl_objs();
 void display_passkey(uint32_t passkey);
@@ -286,6 +289,14 @@ void init_lvgl_objs(){
     }
 
     dir_symbol = lv_img_create(nav_scr,NULL);
+
+    lv_style_init(&bt_symbol_style);
+    lv_style_set_bg_color(&bt_symbol_style,LV_STATE_DEFAULT,LV_COLOR_WHITE);
+    bt_symbol = lv_obj_create(nav_scr, NULL);
+    lv_obj_set_size(bt_symbol, 20, 20);
+    lv_obj_add_style(bt_symbol,LV_OBJ_PART_ALL, &bt_symbol_style);
+    lv_obj_align(bt_symbol, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+    lv_obj_set_hidden(bt_symbol,true);
 
     morse_bin_label = lv_label_create(morse_input_scr,NULL);
     morse_password_label = lv_label_create(morse_input_scr,NULL);
