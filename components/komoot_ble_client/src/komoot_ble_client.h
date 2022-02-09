@@ -15,7 +15,7 @@
 #define PROFILE_NUM      1
 #define PROFILE_A_APP_ID 0
 #define INVALID_HANDLE   0
-#define SCAN_DURATION 30
+#define SCAN_DURATION 1000
 #define EXPECTED_ADV_DATA_LEN 16
 #define GATTC_TAG "GATTC_DEMO"
 

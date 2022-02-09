@@ -444,6 +444,15 @@ void display_task(void *pvParameter){
                 display_meters(nav_data.distance);
                 break;
             }            
+            case NOTIFY_VALUE_BT_CONNECT:{
+                lv_obj_set_hidden(bt_symbol,true);
+                break;
+            }
+            case NOTIFY_VALUE_BT_DISCONNECT:{
+                lv_obj_set_hidden(bt_symbol,false);
+                break;
+            }
+
             case NOTIFY_VALUE_CLEAR:{             
                 lv_scr_load(blank_scr);
                 break;

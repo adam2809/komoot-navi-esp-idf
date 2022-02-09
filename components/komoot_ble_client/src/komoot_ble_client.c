@@ -419,6 +419,12 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
                     if (count > 0 && (char_elem_result[0].properties & ESP_GATT_CHAR_PROP_BIT_NOTIFY)){
                         gl_profile_tab[PROFILE_A_APP_ID].char_handle = char_elem_result[0].char_handle;                        
                         esp_ble_gattc_register_for_notify (gattc_if, gl_profile_tab[PROFILE_A_APP_ID].remote_bda, char_elem_result[0].char_handle);
+
+                        xTaskNotify(
+                            *display_nav_task_handle_pointer,
+                            NOTIFY_VALUE_BT_CONNECT,
+                            eSetValueWithOverwrite
+                        ); 
                     }
                 }
                 /* free char_elem_result */
@@ -427,7 +433,7 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
                 ESP_LOGE(GATTC_TAG, "no char found");
             }
         }
-         break;
+        break;
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_REG_FOR_NOTIFY_EVT");
         if (p_data->reg_for_notify.status != ESP_GATT_OK){
@@ -459,7 +465,6 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
                     if (ret_status != ESP_GATT_OK){
                         ESP_LOGE(GATTC_TAG, "esp_ble_gattc_get_descr_by_char_handle error");
                     }
-                    /* Every char has only one descriptor in our 'ESP_GATTS_DEMO' demo, so we used first 'descr_elem_result' */
                     if (count > 0 && descr_elem_result[0].uuid.len == ESP_UUID_LEN_16 && descr_elem_result[0].uuid.uuid.uuid16 == ESP_GATT_UUID_CHAR_CLIENT_CONFIG){
                         ret_status = esp_ble_gattc_write_char_descr( gattc_if,
                                                                      gl_profile_tab[PROFILE_A_APP_ID].conn_id,
@@ -527,6 +532,12 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         memcpy(bda, p_data->srvc_chg.remote_bda, sizeof(esp_bd_addr_t));
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_SRVC_CHG_EVT, bd_addr:");
         esp_log_buffer_hex(GATTC_TAG, bda, sizeof(esp_bd_addr_t));
+
+        xTaskNotify(
+            *display_nav_task_handle_pointer,
+            NOTIFY_VALUE_BT_DISCONNECT,
+            eSetValueWithOverwrite
+        );     
         break;
     }
     case ESP_GATTC_WRITE_CHAR_EVT:
@@ -541,6 +552,12 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
         get_server = false;
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_DISCONNECT_EVT, reason = %d", p_data->disconnect.reason);
         esp_ble_gap_start_scanning(SCAN_DURATION);
+        
+        xTaskNotify(
+            *display_nav_task_handle_pointer,
+            NOTIFY_VALUE_BT_DISCONNECT,
+            eSetValueWithOverwrite
+        );        
         break;
     default:
         break;
