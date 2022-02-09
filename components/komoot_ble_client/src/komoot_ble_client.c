@@ -47,6 +47,35 @@ bool isUuid128Equal(uint8_t a[ESP_UUID_LEN_128],uint8_t b[ESP_UUID_LEN_128]){
     
 }
 
+void resolve_nav_data(uint8_t* data,uint16_t data_len,struct nav_data_t* target){
+    if(data_len < 4){
+        return;
+    }
+    target->id =  ((uint32_t)data[0]) | ((uint32_t)data[1] << 8) | ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
+    if(data_len == 4){
+        return;
+    }
+    target->direction = data[4];
+    target->distance = ((uint32_t)data[5]) | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16) | ((uint32_t)data[8] << 24);
+    strcpy(target->street,(char*) &data[9]);
+}
+
+void update_display(uint8_t* data,uint16_t data_len){
+    resolve_nav_data(data,data_len,&nav_data);
+    ESP_LOGI(GATTC_TAG, "resolved:");
+    ESP_LOGI(GATTC_TAG, "id=%d direction=%d  distance=%d street=%s",nav_data.id,nav_data.direction,nav_data.distance,nav_data.street);
+
+    if (*display_nav_task_handle_pointer != NULL){
+        xTaskNotify(
+            *display_nav_task_handle_pointer,
+            NOTIFY_VALUE_NAVIGATION,
+            eSetValueWithOverwrite
+        );
+    }else{
+        ESP_LOGE(GATTC_TAG,"NULL task handle");
+    }
+}
+
 static bool connect    = false;
 static bool get_server = false;
 static esp_gattc_char_elem_t *char_elem_result   = NULL;
@@ -463,22 +492,19 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
             ESP_LOGI(GATTC_TAG, "ESP_GATTC_NOTIFY_EVT, receive indicate value:");
         }
         ESP_LOGI(GATTC_TAG, "ESP_GATTC_NOTIFY_EVT, value length: %d",p_data->notify.value_len);
-
         esp_log_buffer_hex(GATTC_TAG, p_data->notify.value, p_data->notify.value_len);
 
-        resolve_nav_data(p_data->notify.value,nav_data);
-        ESP_LOGI(GATTC_TAG, "resolved:");
-        ESP_LOGI(GATTC_TAG, "direction=%d  distance=%d street=%s",nav_data.direction,nav_data.distance,nav_data.street);
-        if (*display_nav_task_handle_pointer != NULL){
-            xTaskNotify(
-                *display_nav_task_handle_pointer,
-                NOTIFY_VALUE_NAVIGATION,
-                eSetValueWithOverwrite
-            );
+        if (p_data->notify.value_len == 4){
+            if(esp_ble_gattc_read_char(gattc_if,p_data->notify.conn_id,p_data->notify.handle,ESP_LE_AUTH_BOND)==ESP_OK){
+                ESP_LOGI(GATTC_TAG, "Read full data init success");
+            }else{
+                ESP_LOGW(GATTC_TAG, "Read full data init fail");
+            }
+        }else if(p_data->notify.value_len > 4){
+            update_display(p_data->notify.value,p_data->notify.value_len);
         }else{
-            ESP_LOGE(GATTC_TAG,"NULL task handle");
+            ESP_LOGW(GATTC_TAG,"Invalid notification data length");
         }
-        
         break;
     case ESP_GATTC_WRITE_DESCR_EVT:
         if (p_data->write.status != ESP_GATT_OK){
@@ -492,8 +518,9 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
             ESP_LOGE(GATTC_TAG, "read char failed, error status = 0x%x", p_data->read.status);
             break;
         }
-        ESP_LOGI(GATTC_TAG, "read descr success hex:");
+        ESP_LOGI(GATTC_TAG, "read cahr success hex:");
         esp_log_buffer_hex(GATTC_TAG,p_data->read.value,p_data->read.value_len);
+        update_display(p_data->read.value,p_data->read.value_len);
         break;
     case ESP_GATTC_SRVC_CHG_EVT: {
         esp_bd_addr_t bda;
@@ -520,11 +547,6 @@ void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc
     }
 }
 
-void resolve_nav_data(uint8_t* data,struct nav_data_t target){
-    target.direction = data[4];
-    target.distance = ((uint32_t)data[5]) | ((uint32_t)data[6] << 8) | ((uint32_t)data[7] << 16) | ((uint32_t)data[8] << 24);
-    strcpy(target.street,(char*) &data[9]);
-}
 
 char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req){
    char *auth_str = NULL;

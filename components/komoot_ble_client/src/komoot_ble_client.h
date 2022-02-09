@@ -34,6 +34,7 @@ struct gattc_profile_inst {
 
 
 struct nav_data_t{
+    uint32_t id;
     uint8_t direction;
     uint32_t distance;
     char street[100];
@@ -43,7 +44,6 @@ esp_err_t init_komoot_ble_client(TaskHandle_t* _display_nav_task_handle_pointer)
 void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 void esp_gattc_cb(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param);
 void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param);
-void resolve_nav_data(uint8_t* data,struct nav_data_t target);
 char *esp_auth_req_to_str(esp_ble_auth_req_t auth_req);
 const char *esp_key_type_to_str(esp_ble_key_type_t key_type);
 uint8_t* resolve_service_from_adv_data(uint8_t* adv_data,uint8_t adv_data_length);
