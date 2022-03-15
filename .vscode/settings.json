@@ -46,6 +46,7 @@
         "lvgl_helpers.h": "c",
         "stdio.h": "c",
         "condition_variable": "c",
-        "queue.h": "c"
+        "queue.h": "c",
+        "fstream": "c"
     }
 }
