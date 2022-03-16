@@ -2,6 +2,7 @@
 
 #include "mpu6050.h"
 #include "button.h"
+#include "libGSM.h"
 #include "driver/rtc_io.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
