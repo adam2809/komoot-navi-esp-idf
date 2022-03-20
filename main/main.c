@@ -62,12 +62,23 @@ void app_main(){
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK( ret );
+    gpio_init();
     button_events = button_init(BUTTONS_BITMASK,false);
 
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_task_handle, 1);
     
     configure_mpu();
     wakeup(&button_events,&display_task_handle);
+}
+
+void gpio_init(){
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pin_bit_mask = 1ULL<<GPIO_NUM_25 | 1ULL<<GPIO_NUM_4;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 0;
+    gpio_config(&io_conf);
 }
 
 void wakeup(){

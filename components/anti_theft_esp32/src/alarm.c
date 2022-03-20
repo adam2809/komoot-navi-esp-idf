@@ -58,16 +58,9 @@ void raise_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm on");
     alarm_state = true;
 
-    gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = 1ULL<<GPIO_NUM_25 | 1ULL<<GPIO_NUM_4;
-    io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 0;
-    gpio_config(&io_conf);
+
     gpio_set_level(GPIO_NUM_25, 0);
     gpio_set_level(GPIO_NUM_4, 1);
-    
     ppposInit();
     xTaskCreate(&sms_task, "sms_task", 4096, NULL, 3, NULL);
     xTaskCreate(&alarm_button_disable_task, "alarm_button_disable_task", 4098, NULL, 5, NULL);
