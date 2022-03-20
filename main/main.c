@@ -75,10 +75,15 @@ void gpio_init(){
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = 1ULL<<GPIO_NUM_25 | 1ULL<<GPIO_NUM_4;
+    io_conf.pin_bit_mask = 1ULL<<GPIO_NUM_25 | 1ULL<<GPIO_NUM_4  | 1ULL<<CONFIG_BUZZER_PIN;
     io_conf.pull_down_en = 0;
     io_conf.pull_up_en = 0;
+
     gpio_config(&io_conf);
+    gpio_set_level(GPIO_NUM_4, 0);
+    gpio_set_level(GPIO_NUM_25, 1);
+    gpio_set_level(CONFIG_BUZZER_PIN, 0);
+
 }
 
 void wakeup(){

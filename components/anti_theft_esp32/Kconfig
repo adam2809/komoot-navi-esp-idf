@@ -4,4 +4,9 @@ menu "Anti theft system configuration"
         default 13
         help
             Set pin that will be used as an interrupt pin for getting wake signal from the imu
+    config BUZZER_PIN
+        int "Set buzzer pin"
+        default 32
+        help
+            Set pin that will be connected to transistor base which controls buzzer
 endmenu

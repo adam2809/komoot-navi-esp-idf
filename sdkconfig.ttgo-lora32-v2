@@ -1393,6 +1393,7 @@ CONFIG_WPA_MBEDTLS_CRYPTO=y
 # Anti theft system configuration
 #
 CONFIG_MPU6050_INTERRUPT_INPUT_PIN=12
+CONFIG_BUZZER_PIN=32
 # end of Anti theft system configuration
 
 #

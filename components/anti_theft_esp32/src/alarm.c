@@ -1,7 +1,7 @@
 #include "alarm.h"
 
 #define TAG "ALARM"
-
+#define ALARM_ENABLE 1
 bool alarm_state = false;
 RTC_NOINIT_ATTR bool lock_state;
 TaskHandle_t alarm_ringing_task_handle;
@@ -20,6 +20,7 @@ void alarm_button_disable_task(void *pvParameter){
             if ((ev.pin == CONFIG_LEFT_BUTTON_PIN) && (ev.event == BUTTON_UP)) {                        
                 xTaskCreate(&morse_password_input_task, "morse_password_input_task", 4098, (void*) &morse_input_params, 5, NULL);
 
+                gpio_set_level(CONFIG_BUZZER_PIN,0);
                 if(alarm_ringing_task_handle != NULL){
                     vTaskDelete(alarm_ringing_task_handle);
                 }
@@ -32,9 +33,15 @@ void alarm_button_disable_task(void *pvParameter){
     vTaskDelete(NULL);
 }
 
+int buzzer_pin_level = 0;
 void alarm_ringing_task(void *pvParameter){
+    gpio_set_level(CONFIG_BUZZER_PIN, 0);
     while(1){  
         display_notif(NOTIFY_VALUE_ALARM,ALARM_NOTIF_FLASHING_FREQ);
+        #if ALARM_ENABLE == 1
+        gpio_set_level(CONFIG_BUZZER_PIN, !buzzer_pin_level);
+        buzzer_pin_level = !buzzer_pin_level;
+        #endif
 
         vTaskDelay(ALARM_NOTIF_FLASHING_FREQ / portTICK_RATE_MS);
     }
@@ -61,10 +68,10 @@ void raise_alarm_state(){
 
     gpio_set_level(GPIO_NUM_25, 0);
     gpio_set_level(GPIO_NUM_4, 1);
-    ppposInit();
-    xTaskCreate(&sms_task, "sms_task", 4096, NULL, 3, NULL);
     xTaskCreate(&alarm_button_disable_task, "alarm_button_disable_task", 4098, NULL, 5, NULL);
     xTaskCreate(&alarm_ringing_task, "alarm_ringing_task", 4098, NULL, 5, &alarm_ringing_task_handle);
+    ppposInit();
+    xTaskCreate(&sms_task, "sms_task", 4096, NULL, 3, NULL);
 }
 void lower_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm off");
