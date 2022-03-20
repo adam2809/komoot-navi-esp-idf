@@ -1,7 +1,7 @@
 #include "alarm.h"
 
 #define TAG "ALARM"
-#define ALARM_ENABLE 1
+#define ALARM_ENABLE 0
 bool alarm_state = false;
 RTC_NOINIT_ATTR bool lock_state;
 TaskHandle_t alarm_ringing_task_handle;

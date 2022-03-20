@@ -23,17 +23,9 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h"
 
 #include "nvs.h"
 #include "nvs_flash.h"
-
-#include "esp_bt.h"
-#include "esp_gap_ble_api.h"
-#include "esp_gattc_api.h"
-#include "esp_gatt_defs.h"
-#include "esp_bt_main.h"
-#include "esp_gatt_common_api.h"
 
 
 #include "esp_log.h"
@@ -49,7 +41,6 @@
 #define LV_TICK_PERIOD_MS 1
 
 void wakeup();
-
 
 TaskHandle_t display_task_handle = NULL;
 QueueHandle_t button_events = NULL;
