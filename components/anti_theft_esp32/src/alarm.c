@@ -57,18 +57,6 @@ bool get_alarm_state(){
 void raise_alarm_state(){
     ESP_LOGI(TAG,"Turning alarm on");
     alarm_state = true;
-    xTaskCreate(&alarm_button_disable_task, "alarm_button_disable_task", 4098, NULL, 5, NULL);
-    xTaskCreate(&alarm_ringing_task, "alarm_ringing_task", 4098, NULL, 5, &alarm_ringing_task_handle);
-    xTaskCreate(&sms_task, "sms_task", 4096, NULL, 3, NULL);
-}
-void lower_alarm_state(){
-    ESP_LOGI(TAG,"Turning alarm off");
-    alarm_state = false;
-}
-
-void lock(){
-    ESP_LOGI(TAG,"Locking");
-    display_notif(NOTIFY_VALUE_LOCK,1500);
 
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -79,8 +67,21 @@ void lock(){
     gpio_config(&io_conf);
     gpio_set_level(GPIO_NUM_25, 0);
     gpio_set_level(GPIO_NUM_4, 1);
-
+    
     ppposInit();
+    xTaskCreate(&sms_task, "sms_task", 4096, NULL, 3, NULL);
+    xTaskCreate(&alarm_button_disable_task, "alarm_button_disable_task", 4098, NULL, 5, NULL);
+    xTaskCreate(&alarm_ringing_task, "alarm_ringing_task", 4098, NULL, 5, &alarm_ringing_task_handle);
+}
+void lower_alarm_state(){
+    ESP_LOGI(TAG,"Turning alarm off");
+    alarm_state = false;
+}
+
+void lock(){
+    ESP_LOGI(TAG,"Locking");
+    display_notif(NOTIFY_VALUE_LOCK,1500);
+
     go_to_deep_sleep(true);
 }
 
