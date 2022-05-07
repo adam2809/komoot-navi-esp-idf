@@ -217,15 +217,10 @@ const lv_img_dsc_t alarm_icon = {
 
 lv_obj_t* nav_scr;
 lv_obj_t* passkey_scr;
-lv_obj_t* morse_input_scr; 
-lv_obj_t* alarm_notifs_scr; 
 lv_obj_t* blank_scr; 
 
 lv_obj_t * passkey_digits_row_top[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * passkey_digits_row_bottom[DIGITS_IN_ROW_COUNT] = {NULL};
-lv_obj_t * morse_prompt_label = NULL;
-lv_obj_t * morse_bin_label = NULL;
-lv_obj_t * morse_password_label = NULL;
 
 lv_obj_t * meters_digits[DIGITS_IN_ROW_COUNT] = {NULL};
 lv_obj_t * dir_symbol = NULL;
@@ -238,7 +233,6 @@ void init_lvgl_objs();
 void display_passkey(uint32_t passkey);
 void display_dir_symbol(uint8_t symbol);
 void display_meters(uint32_t meters);
-void display_morse(uint8_t bin_morse,uint8_t len,char* password);
 
 void init_lvgl_display(lv_color_t* buf) {
     lvgl_i2c_locking(i2c_manager_locking());
@@ -271,8 +265,6 @@ void init_lvgl_display(lv_color_t* buf) {
 void init_lvgl_objs(){
     passkey_scr  = lv_obj_create(NULL, NULL);
     nav_scr  = lv_obj_create(NULL, NULL);
-    morse_input_scr = lv_obj_create(NULL, NULL);
-    alarm_notifs_scr = lv_obj_create(NULL, NULL);
 
     for(int i = 0;i < DIGITS_IN_ROW_COUNT;i++){
         passkey_digits_row_top[i] = lv_img_create(passkey_scr,NULL);
@@ -297,21 +289,6 @@ void init_lvgl_objs(){
     lv_obj_add_style(bt_symbol,LV_OBJ_PART_ALL, &bt_symbol_style);
     lv_obj_align(bt_symbol, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
     lv_obj_set_hidden(bt_symbol,false);
-
-    morse_bin_label = lv_label_create(morse_input_scr,NULL);
-    morse_password_label = lv_label_create(morse_input_scr,NULL);
-    morse_prompt_label = lv_label_create(morse_input_scr,NULL);
-
-    lv_obj_align(morse_bin_label, NULL, LV_ALIGN_CENTER,0,0);
-    lv_obj_align(morse_password_label, NULL, LV_ALIGN_IN_BOTTOM_MID,0,0);
-    lv_obj_align(morse_prompt_label, NULL, LV_ALIGN_IN_TOP_MID,0,0);
-
-    lv_label_set_text(morse_bin_label,"");
-    lv_label_set_text(morse_password_label,"");
-    lv_label_set_text(morse_prompt_label,"Password:");
-
-    alarm_symbol = lv_img_create(alarm_notifs_scr,NULL);
-    lv_obj_align(alarm_symbol, NULL, LV_ALIGN_CENTER,0,0);
 
     blank_scr = lv_obj_create(NULL, NULL); 
     lv_scr_load(blank_scr);
@@ -356,47 +333,6 @@ void display_meters(uint32_t meters){
         lv_img_set_src(meters_digits[1],digits[1]);
         lv_img_set_src(meters_digits[2],&km);
     }
-}
-
-void display_morse(uint8_t bin_morse,uint8_t len,char* password){
-    ESP_LOGI(TAG,"Displaing morse");
-
-    lv_scr_load(morse_input_scr);
-
-    char bit_str_rep[MAX_BITS_IN_LETTER+2] = {'\0'};
-    bit_str_rep[0] = bin_morse_2_char(bin_morse,len);
-    for (int i = 0; i < len; i++){
-        bool bit = (bin_morse >> i) % 2;
-        bit_str_rep[i+1] = bit ? '_' : '.';
-    }
-    
-    
-    lv_label_set_text(morse_password_label,password);
-    lv_label_set_text(morse_bin_label,bit_str_rep);
-}
-
-void display_wrong_password(){
-    ESP_LOGI(TAG,"Displaing wrong password");
-
-    lv_scr_load(morse_input_scr);
-
-    lv_label_set_text(morse_bin_label,"Wrong!");
-}
-
-void display_lock_notif(){
-    ESP_LOGI(TAG,"Displaing lock notification");
-    lv_scr_load(alarm_notifs_scr);
-    lv_img_set_src(alarm_symbol,&locked);
-}
-void display_unlock_notif(){
-    ESP_LOGI(TAG,"Displaing unlock notification");
-    lv_scr_load(alarm_notifs_scr);
-    lv_img_set_src(alarm_symbol,&unlocked);
-}
-void display_alarm_notif(){
-    ESP_LOGI(TAG,"Displaing alarm notification");
-    lv_scr_load(alarm_notifs_scr);
-    lv_img_set_src(alarm_symbol,&alarm_icon);
 }
 
 SemaphoreHandle_t xGuiSemaphore;
@@ -459,26 +395,6 @@ void display_task(void *pvParameter){
             }             
             case NOTIFY_VALUE_PASSKEY:{
                 display_passkey(passkey);
-                break;
-            }            
-            case NOTIFY_VALUE_MORSE:{
-                display_morse(morse_char,morse_char_len,morse_password);
-                break;
-            }               
-            case NOTIFY_VALUE_WRONG_PASS:{
-                display_wrong_password();
-                break;
-            }          
-            case NOTIFY_VALUE_LOCK:{
-                display_lock_notif();
-                break;
-            }          
-            case NOTIFY_VALUE_UNLOCK:{
-                display_unlock_notif();
-                break;
-            }          
-            case NOTIFY_VALUE_ALARM:{
-                display_alarm_notif();
                 break;
             }
         }
