@@ -6,3 +6,6 @@
 *.old
 build
 *.dia.autosave
+
+components/state_machine/src-gen
+components/state_machine/lib-gen
