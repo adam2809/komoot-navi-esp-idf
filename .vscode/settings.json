@@ -47,6 +47,7 @@
         "stdio.h": "c",
         "condition_variable": "c",
         "queue.h": "c",
-        "fstream": "c"
+        "fstream": "c",
+        "statechart_required.h": "c"
     }
 }
