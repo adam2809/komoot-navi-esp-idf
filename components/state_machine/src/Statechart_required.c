@@ -16,8 +16,14 @@ extern void statechart_activate_alarm( Statechart* handle){
     ESP_LOGI(TAG,"Activating alarm");
     xTaskCreate(alarm_ringing_task, "alarm_ringing_task", 4098, NULL, 5, alarm_ringing_task_handle);
 }
-extern void statechart_display_unlocked( Statechart* handle){}
-extern void statechart_display_locked( Statechart* handle){}
+extern void statechart_display_unlocked( Statechart* handle){
+    ESP_LOGI(TAG,"Displaying unlocked");
+    display_notif(NOTIFY_VALUE_UNLOCK, 1500);
+}
+extern void statechart_display_locked( Statechart* handle){
+    ESP_LOGI(TAG,"Displaying locked");
+    display_notif(NOTIFY_VALUE_LOCK, 1500);
+}
 extern void statechart_new_password_input( Statechart* handle, const sc_integer password){}
 extern sc_boolean statechart_verify_password( Statechart* handle, const sc_integer password){
     return false;
