@@ -48,6 +48,7 @@ QueueHandle_t button_events = NULL;
 morse_input_params_t morse_input_params;
 Statechart statechart;
 
+void raise_button_events_on_click(void *pvParameter);
 
 void app_main(){
     esp_err_t ret = nvs_flash_init();
@@ -60,11 +61,29 @@ void app_main(){
     button_events = button_init(BUTTONS_BITMASK,false);
 
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_task_handle, 1);
-    
+    xTaskCreate(&raise_button_events_on_click, "raise_button_events_on_click", 4098, NULL, 5, NULL);
+
     configure_mpu();
 
     statechart_init(&statechart);
     statechart_enter(&statechart);
+}
+
+void raise_button_events_on_click(void *pvParameter){
+    button_event_t ev;
+    while(true){
+        if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS) && ev.event == BUTTON_UP) {
+            if(ev.pin == CONFIG_LEFT_BUTTON_PIN){
+                ESP_LOGI(TAG,"Got left");
+                statechart_raise_left_button_clicked(&statechart);
+            }else if(ev.pin == CONFIG_RIGHT_BUTTON_PIN){
+                ESP_LOGI(TAG,"Got right");
+                statechart_raise_right_button_clicked(&statechart);
+            }else{
+                ESP_LOGI(TAG,"Undefined button pin");
+            }
+        }
+    }
 }
 
 void gpio_init(){

@@ -49,5 +49,13 @@
         "queue.h": "c",
         "fstream": "c",
         "statechart_required.h": "c"
-    }
+    },
+    "idf.flashType": "UART",
+    "idf.port": "/dev/ttyUSB0",
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#32225E",
+        "titleBar.activeBackground": "#463083",
+        "titleBar.activeForeground": "#FCFCFE"
+    },
+    "idf.adapterTargetName": "esp32"
 }
