@@ -26,4 +26,5 @@ void lock();
 void unlock();
 
 void alarm_button_disable_task(void *pvParameter);
+void alarm_ringing_task(void *pvParameter);
 void go_to_deep_sleep(bool locked);
