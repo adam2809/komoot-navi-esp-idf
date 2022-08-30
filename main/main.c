@@ -68,18 +68,39 @@ void app_main(){
     statechart_enter(&statechart);
 }
 
+bool is_held = false;
+bool is_left_down = false;
+bool is_right_down= false;
 void raise_button_events_on_click(void *pvParameter){
     button_event_t ev;
     while(true){
-        if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS) && ev.event == BUTTON_UP) {
-            if(ev.pin == CONFIG_LEFT_BUTTON_PIN){
-                ESP_LOGI(TAG,"Got left");
-                statechart_raise_left_button_clicked(&statechart);
-            }else if(ev.pin == CONFIG_RIGHT_BUTTON_PIN){
-                ESP_LOGI(TAG,"Got right");
-                statechart_raise_right_button_clicked(&statechart);
-            }else{
-                ESP_LOGI(TAG,"Undefined button pin");
+        if (xQueueReceive(button_events, &ev, 100/portTICK_PERIOD_MS)) {
+            if(ev.event == BUTTON_DOWN){
+                if(ev.pin == CONFIG_LEFT_BUTTON_PIN){
+                    ESP_LOGD(TAG,"Left button down event");
+                    is_left_down = true;
+                }else if(ev.pin == CONFIG_RIGHT_BUTTON_PIN){
+                    ESP_LOGD(TAG,"Right button down event");
+                    is_right_down = true;
+                }else{
+                    ESP_LOGD(TAG,"Undefined button pin");
+                }
+            }else if(ev.event == BUTTON_HELD && !is_held){
+                ESP_LOGI(TAG,"Either button hold event");
+                statechart_raise_double_button_clicked(&statechart);
+                is_held = true;
+            }else if(ev.event == BUTTON_UP){
+                if(is_left_down && !is_held){
+                    ESP_LOGD(TAG,"Right button up but not held event");
+                    statechart_raise_left_button_clicked(&statechart);
+                }
+                if(is_right_down && !is_held){
+                    ESP_LOGD(TAG,"Right button up not but held event");
+                    statechart_raise_right_button_clicked(&statechart);
+                }
+                is_held = false;
+                is_left_down = false;
+                is_right_down = false;
             }
         }
     }
