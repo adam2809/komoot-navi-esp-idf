@@ -6,7 +6,6 @@ bool alarm_state = false;
 RTC_NOINIT_ATTR bool lock_state;
 TaskHandle_t alarm_ringing_task_handle;
 morse_input_params_t morse_input_params;
-void display_notif(uint8_t notify_val,int display_time_ms);
 
 void alarm_init(morse_input_params_t params){
     morse_input_params = params;
@@ -37,7 +36,7 @@ int buzzer_pin_level = 0;
 void alarm_ringing_task(void *pvParameter){
     gpio_set_level(CONFIG_BUZZER_PIN, 0);
     while(1){  
-        display_notif(NOTIFY_VALUE_ALARM,ALARM_NOTIF_FLASHING_FREQ);
+        display_notif(NOTIFY_VALUE_ALARM,ALARM_NOTIF_FLASHING_FREQ, NULL);
         #if ALARM_ENABLE == 1
         gpio_set_level(CONFIG_BUZZER_PIN, !buzzer_pin_level);
         buzzer_pin_level = !buzzer_pin_level;
@@ -80,27 +79,27 @@ void lower_alarm_state(){
 
 void lock(){
     ESP_LOGI(TAG,"Locking");
-    display_notif(NOTIFY_VALUE_LOCK,1500);
+    display_notif(NOTIFY_VALUE_LOCK,1500, NULL);
 
     go_to_deep_sleep(true);
 }
 
 void unlock(){
     ESP_LOGI(TAG,"Unlocking");
-    display_notif(NOTIFY_VALUE_UNLOCK,1500);
+    display_notif(NOTIFY_VALUE_UNLOCK,1500, NULL);
     go_to_deep_sleep(false);
 }
 
-void display_notif(uint8_t notify_val,int display_time_ms){
-    if (*morse_input_params.display_task_handle != NULL){
+void display_notif(uint8_t notify_val,int display_time_ms,TaskHandle_t display_task_handle){
+    if (display_task_handle != NULL){
         xTaskNotify(
-            *morse_input_params.display_task_handle,
+            display_task_handle,
             notify_val,
             eSetValueWithOverwrite
         );
         vTaskDelay(pdMS_TO_TICKS(display_time_ms));
         xTaskNotify(
-            *morse_input_params.display_task_handle,
+            display_task_handle,
             NOTIFY_VALUE_CLEAR,
             eSetValueWithOverwrite
         );

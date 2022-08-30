@@ -28,4 +28,4 @@ void unlock();
 void alarm_button_disable_task(void *pvParameter);
 void alarm_ringing_task(void *pvParameter);
 void go_to_deep_sleep(bool locked);
-void display_notif(uint8_t notify_val,int display_time_ms);
+void display_notif(uint8_t notify_val,int display_time_ms,TaskHandle_t display_task_handle);
