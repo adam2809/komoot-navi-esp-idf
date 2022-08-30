@@ -1,4 +1,5 @@
 #include "display.h"
+#include "Statechart_required.h"
 
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
 #include "lvgl.h"
@@ -238,7 +239,7 @@ void init_lvgl_objs();
 void display_passkey(uint32_t passkey);
 void display_dir_symbol(uint8_t symbol);
 void display_meters(uint32_t meters);
-void display_morse(uint8_t bin_morse,uint8_t len,char* password);
+void display_morse(uint32_t password);
 
 void init_lvgl_display(lv_color_t* buf) {
     lvgl_i2c_locking(i2c_manager_locking());
@@ -358,21 +359,22 @@ void display_meters(uint32_t meters){
     }
 }
 
-void display_morse(uint8_t bin_morse,uint8_t len,char* password){
-    ESP_LOGI(TAG,"Displaing morse");
+void display_morse(uint32_t password){
+    ESP_LOGI(TAG,"Displaing password %x",password);
 
     lv_scr_load(morse_input_scr);
 
-    char bit_str_rep[MAX_BITS_IN_LETTER+2] = {'\0'};
-    bit_str_rep[0] = bin_morse_2_char(bin_morse,len);
-    for (int i = 0; i < len; i++){
-        bool bit = (bin_morse >> i) % 2;
-        bit_str_rep[i+1] = bit ? '_' : '.';
+    char password_str[31] = {'\0'};
+    uint8_t password_str_index;
+    uint32_t password_bitmask;
+    for (password_bitmask = 1U << 31U; !(password & password_bitmask); password_bitmask >>= 1);
+    password_bitmask >>= 1;
+    for (password_str_index = 0; password_bitmask != 0; password_bitmask >>= 1){
+        password_str[password_str_index] = password & password_bitmask ? '_' : '.';
+        password_str_index++;
     }
-    
-    
-    lv_label_set_text(morse_password_label,password);
-    lv_label_set_text(morse_bin_label,bit_str_rep);
+
+    lv_label_set_text(morse_bin_label,password_str);
 }
 
 void display_wrong_password(){
@@ -462,7 +464,7 @@ void display_task(void *pvParameter){
                 break;
             }            
             case NOTIFY_VALUE_MORSE:{
-                display_morse(morse_char,morse_char_len,morse_password);
+                display_morse(get_password());
                 break;
             }               
             case NOTIFY_VALUE_WRONG_PASS:{
