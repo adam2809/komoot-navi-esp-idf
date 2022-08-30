@@ -18,11 +18,11 @@ extern void statechart_activate_alarm( Statechart* handle){
 }
 extern void statechart_display_unlocked( Statechart* handle){
     ESP_LOGI(TAG,"Displaying unlocked");
-    display_notif(NOTIFY_VALUE_UNLOCK, 1500);
+    display_notif(NOTIFY_VALUE_UNLOCK, 1500, handle->display_task_handle);
 }
 extern void statechart_display_locked( Statechart* handle){
     ESP_LOGI(TAG,"Displaying locked");
-    display_notif(NOTIFY_VALUE_LOCK, 1500);
+    display_notif(NOTIFY_VALUE_LOCK, 1500, handle->display_task_handle);
 }
 extern void statechart_new_password_input( Statechart* handle, const sc_integer password){}
 extern sc_boolean statechart_verify_password( Statechart* handle, const sc_integer password){

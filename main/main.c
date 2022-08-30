@@ -43,7 +43,6 @@
 
 void wakeup();
 
-TaskHandle_t display_task_handle = NULL;
 QueueHandle_t button_events = NULL;
 morse_input_params_t morse_input_params;
 Statechart statechart;
@@ -60,7 +59,7 @@ void app_main(){
     gpio_init();
     button_events = button_init(BUTTONS_BITMASK,false);
 
-    xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &display_task_handle, 1);
+    xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &statechart.display_task_handle, 1);
     xTaskCreate(&raise_button_events_on_click, "raise_button_events_on_click", 4098, NULL, 5, NULL);
 
     configure_mpu();
