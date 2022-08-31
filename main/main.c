@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <driver/gpio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -46,8 +47,10 @@ void wakeup();
 QueueHandle_t button_events = NULL;
 morse_input_params_t morse_input_params;
 Statechart statechart;
+static QueueHandle_t monitor_mpu_interrupt_q;
 
 void raise_button_events_on_click(void *pvParameter);
+void monitor_mpu_interrupt(void *ignore);
 
 void app_main(){
     esp_err_t ret = nvs_flash_init();
@@ -60,7 +63,8 @@ void app_main(){
     button_events = button_init(BUTTONS_BITMASK,false);
 
     xTaskCreatePinnedToCore(display_task, "display_task", 4096*2, NULL, 0, &statechart.display_task_handle, 1);
-    xTaskCreate(&raise_button_events_on_click, "raise_button_events_on_click", 4098, NULL, 5, NULL);
+    xTaskCreate(raise_button_events_on_click, "raise_button_events_on_click", 4098, NULL, 5, NULL);
+    xTaskCreate(monitor_mpu_interrupt, "monitor_mpu_interrupt", 4098, NULL, 5, NULL);
 
     configure_mpu();
 
@@ -118,4 +122,33 @@ void gpio_init(){
     gpio_set_level(GPIO_NUM_4, 0);
     gpio_set_level(GPIO_NUM_25, 1);
     gpio_set_level(CONFIG_BUZZER_PIN, 0);
+}
+
+static void handler(void *args) {
+    gpio_num_t gpio;
+    gpio = CONFIG_MPU6050_INTERRUPT_INPUT_PIN;
+    xQueueSendToBackFromISR(monitor_mpu_interrupt_q, &gpio, NULL);
+}
+
+void monitor_mpu_interrupt(void *ignore) {
+    gpio_num_t gpio;
+    monitor_mpu_interrupt_q = xQueueCreate(10, sizeof(gpio_num_t));
+
+    gpio_config_t gpioConfig;
+    gpioConfig.pin_bit_mask = 1ULL << CONFIG_MPU6050_INTERRUPT_INPUT_PIN;
+    gpioConfig.mode         = GPIO_MODE_INPUT;
+    gpioConfig.pull_up_en   = GPIO_PULLUP_DISABLE;
+    gpioConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    gpioConfig.intr_type    = GPIO_INTR_POSEDGE;
+    gpio_config(&gpioConfig);
+
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(CONFIG_MPU6050_INTERRUPT_INPUT_PIN, handler, NULL);
+    while(1) {
+        ESP_LOGD(TAG, "Waiting on mpu interrupt");
+        BaseType_t rc = xQueueReceive(monitor_mpu_interrupt_q, &gpio, portMAX_DELAY);
+        ESP_LOGI(TAG, "Got mpu interrupt: %d", rc);
+        statechart_raise_motion_detected(&statechart);
+    }
+    vTaskDelete(NULL);
 }
