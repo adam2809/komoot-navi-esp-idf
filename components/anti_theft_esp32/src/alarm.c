@@ -36,7 +36,7 @@ int buzzer_pin_level = 0;
 void alarm_ringing_task(void *pvParameter){
     gpio_set_level(CONFIG_BUZZER_PIN, 0);
     while(1){  
-        display_notif(NOTIFY_VALUE_ALARM,ALARM_NOTIF_FLASHING_FREQ, NULL);
+        display_notif(NOTIFY_VALUE_ALARM,ALARM_NOTIF_FLASHING_FREQ, (TaskHandle_t) pvParameter);
         #if ALARM_ENABLE == 1
         gpio_set_level(CONFIG_BUZZER_PIN, !buzzer_pin_level);
         buzzer_pin_level = !buzzer_pin_level;
