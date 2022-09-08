@@ -20,8 +20,8 @@ extern void statechart_disable_alarm_display( Statechart* handle){
 
 extern void statechart_activate_alarm_display( Statechart* handle){
     ESP_LOGI(TAG,"Activating alarm");
-    xTaskCreate(alarm_ringing_task,
-        "alarm_ringing_task",
+    xTaskCreate(alarm_display_task,
+        "alarm_display_task",
         4098,
         (void*) handle->display_task_handle,
         5,

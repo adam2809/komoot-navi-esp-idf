@@ -33,7 +33,7 @@ void alarm_button_disable_task(void *pvParameter){
 }
 
 int buzzer_pin_level = 0;
-void alarm_ringing_task(void *pvParameter){
+void alarm_display_task(void *pvParameter){
     gpio_set_level(CONFIG_BUZZER_PIN, 0);
     while(1){  
         display_notif(NOTIFY_VALUE_ALARM,ALARM_NOTIF_FLASHING_FREQ, (TaskHandle_t) pvParameter);
@@ -68,7 +68,7 @@ void raise_alarm_state(){
     gpio_set_level(GPIO_NUM_25, 0);
     gpio_set_level(GPIO_NUM_4, 1);
     xTaskCreate(&alarm_button_disable_task, "alarm_button_disable_task", 4098, NULL, 5, NULL);
-    xTaskCreate(&alarm_ringing_task, "alarm_ringing_task", 4098, NULL, 5, &alarm_ringing_task_handle);
+    xTaskCreate(&alarm_display_task, "alarm_display_task", 4098, NULL, 5, &alarm_ringing_task_handle);
     ppposInit();
     xTaskCreate(&sms_task, "sms_task", 4096, NULL, 3, NULL);
 }
