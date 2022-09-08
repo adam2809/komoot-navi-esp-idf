@@ -11,6 +11,7 @@
 #include "freertos/queue.h"
 
 #define ALARM_NOTIF_FLASHING_FREQ 200
+#define ALARM_HORN_FREQ 200
 
 struct morse_input_params_s;
 
@@ -27,5 +28,6 @@ void unlock();
 
 void alarm_button_disable_task(void *pvParameter);
 void alarm_display_task(void *pvParameter);
+void alarm_horn_task(void *pvParameter);
 void go_to_deep_sleep(bool locked);
 void display_notif(uint8_t notify_val,int display_time_ms,TaskHandle_t display_task_handle);
