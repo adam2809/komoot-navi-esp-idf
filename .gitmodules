@@ -13,3 +13,6 @@
 [submodule "components/esp32-button"]
 	path = components/esp32-button
 	url = git@github.com:adam2809/esp32-button.git
+[submodule "components/state_machine"]
+	path = components/state_machine
+	url = git@github.com:adam2809/StatechartBikeComputer.git
